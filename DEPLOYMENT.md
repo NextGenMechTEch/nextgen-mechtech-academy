@@ -14,7 +14,7 @@ touched — only the files below were added for deployment:
 
 The original `.env` (which only ever held blank placeholder values, no real
 secrets) was renamed to `.env.example`. **Never upload a real `.env` file to
-Render** — set real values as Environment Variables in the dashboard instead.
+Render.** — set real values as Environment Variables in the dashboard instead.
 
 ---
 
