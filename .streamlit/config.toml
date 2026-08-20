@@ -1,0 +1,21 @@
+[server]
+headless = true
+address = "0.0.0.0"
+enableCORS = false
+enableXsrfProtection = true
+maxUploadSize = 200
+
+[client]
+# Safety net only — the app's own try/except in app.py is what actually
+# decides what students/public vs. staff see (professional message vs.
+# full detail). This setting only matters for the rare case something
+# raises outside that wrapped block, so a raw traceback (which could
+# expose file paths, query text, etc.) is never shown by default even then.
+showErrorDetails = "none"
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+# Left intentionally empty — app defines its own theme via components/styles.py.
+# Kept here only so Streamlit doesn't inject its own default theme banner.

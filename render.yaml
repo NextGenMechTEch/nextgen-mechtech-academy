@@ -1,0 +1,58 @@
+# Render Blueprint — NextGen MechTech Academy
+# Docs: https://render.com/docs/blueprint-spec
+#
+# This file lets you deploy via "New +" -> "Blueprint" on Render, pointing at
+# this repo. Render will read this spec and provision the web service below.
+# All secret values are marked `sync: false`, meaning Render will prompt you
+# to enter them in the dashboard rather than storing them in this file/repo.
+
+services:
+  - type: web
+    name: nextgen-mechtech-academy
+    runtime: python
+    plan: starter          # change to "free" or a higher plan as needed
+    region: oregon          # change to the region closest to your users
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
+      # ── App ────────────────────────────────────────────────────────────────
+      - key: APP_URL
+        sync: false          # set to your live Render URL, e.g. https://nextgen-mechtech-academy.onrender.com
+
+      # ── Database (Supabase PostgreSQL) ───────────────────────────────────────
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSLMODE
+        value: require
+      - key: DATABASE_POOL_RECYCLE
+        value: "300"
+      - key: DATABASE_POOL_SIZE
+        value: "5"
+      - key: DATABASE_MAX_OVERFLOW
+        value: "10"
+
+      # ── Email (Brevo) ─────────────────────────────────────────────────────
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: BREVO_SENDER_NAME
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: CAREERS_EMAIL
+        sync: false
+      - key: SUPPORT_EMAIL
+        sync: false
+
+      # ── File Storage (Cloudinary) ─────────────────────────────────────────
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
