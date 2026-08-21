@@ -479,8 +479,26 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
 .nmt-footer a.flink { display: block; font-size: 13.5px; color: #A9B6CE; text-decoration: none; margin-bottom: 9px; transition: color .15s; }
 .nmt-footer a.flink:hover { color: var(--amber-400); }
 .nmt-footer .contact-line { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: #A9B6CE; margin-bottom: 9px; }
+.nmt-footer-bottombar { padding: 0 0 28px; }
 .nmt-footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 22px; display: flex; justify-content: space-between;
   align-items: center; font-size: 12.5px; color: #6B7A98; flex-wrap: wrap; gap: 8px; }
+
+/* Newsletter bar between the footer grid and the copyright bar — same navy
+   background so it reads as one continuous footer block. */
+.st-key-footer_newsletter { background: var(--navy-950); padding: 4px 24px 32px; margin-top: -1rem; }
+.st-key-footer_newsletter .nmt-footer-nl-inner { max-width: 1180px; margin: 0 auto; text-align: center; padding-bottom: 18px; }
+.st-key-footer_newsletter .nmt-footer-nl-heading { font-family: var(--font-head); font-weight: 700; font-size: 15px; color: #fff; margin-bottom: 4px; }
+.st-key-footer_newsletter .nmt-footer-nl-sub { font-size: 12.5px; color: #8C9AB5; margin: 0; }
+.st-key-footer_newsletter div[data-testid="stForm"] { border: none; padding: 0; background: transparent; max-width: 480px; margin: 0 auto; }
+.st-key-footer_newsletter div[data-testid="stTextInput"] input {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+  color: #fff; border-radius: var(--radius-sm);
+}
+.st-key-footer_newsletter div[data-testid="stTextInput"] input::placeholder { color: #6B7A98; }
+.st-key-footer_newsletter button[kind="secondaryFormSubmit"],
+.st-key-footer_newsletter button[kind="formSubmit"] {
+  background: var(--blue-600); color: #fff; border: none;
+}
 
 /* ───────────────────── Animations ───────────────────── */
 @keyframes fadeInUp {
