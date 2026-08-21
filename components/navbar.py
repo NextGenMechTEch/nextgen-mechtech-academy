@@ -216,21 +216,24 @@ def render_footer():
     </div>
     """), unsafe_allow_html=True)
 
-    # Newsletter bar — dark navy section directly below the grid (below the
-    # brand column's social icons in reading order), functionally wired to
-    # NewsletterSubscriber. Wrapped in a keyed container so CSS in styles.py
-    # (.st-key-footer_newsletter) can theme it to match the footer above/below.
+    # Newsletter bar — integrated as a bordered strip between the footer grid
+    # and the copyright bar, functionally wired to NewsletterSubscriber.
+    # Wrapped in a keyed container so CSS in styles.py (.st-key-footer_newsletter)
+    # can theme it to match the footer above/below. Heading/text sits left,
+    # the subscribe form sits right on desktop, and stacks on narrow screens
+    # (Streamlit's own horizontal-block layout already wraps to vertical there).
     with st.container(key="footer_newsletter"):
-        st.markdown(html_block("""
-        <div class="nmt-footer-nl-inner">
-          <div class="nmt-footer-nl-heading">Get Course Updates</div>
-          <p class="nmt-footer-nl-sub">Subscribe for new courses &amp; announcements.</p>
-        </div>
-        """), unsafe_allow_html=True)
-        _, nl_form_col, _ = st.columns([1, 2, 1])
+        nl_text_col, nl_form_col = st.columns([1, 1.15], gap="large")
+        with nl_text_col:
+            st.markdown(html_block(f"""
+            <div class="nmt-footer-nl-text">
+              <div class="nmt-footer-nl-heading">{icon("mail", size=15, color="var(--amber-400)")} Get Course Updates</div>
+              <p class="nmt-footer-nl-sub">Subscribe for new courses &amp; announcements.</p>
+            </div>
+            """), unsafe_allow_html=True)
         with nl_form_col:
             with st.form("footer_newsletter_form", clear_on_submit=True, border=False):
-                nl_col1, nl_col2 = st.columns([3, 1])
+                nl_col1, nl_col2 = st.columns([3, 1], gap="small")
                 with nl_col1:
                     nl_email = st.text_input("Email", placeholder="you@example.com", label_visibility="collapsed", key="footer_nl_email")
                 with nl_col2:
