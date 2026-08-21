@@ -14,6 +14,7 @@ from database.models import (
     User, Course, Registration, Certificate, TutorApplication,
     ContactMessage, WebsiteSettings, Announcement, Instructor,
     EmailTemplate, RecruitmentDrive, JobOpening, NavItem,
+    NewsletterSubscriber,
     UserRole, RegistrationStatus, PaymentStatus
 )
 from sqlalchemy.orm import joinedload
@@ -56,6 +57,7 @@ _MENU_ITEMS = [
     ("award", "Certificates"), ("briefcase", "Tutor Apps"), ("mail", "Messages"),
     ("dollar-sign", "Payment Methods"),
     ("bell", "Announcements"), ("mail", "Email Templates"),
+    ("mail", "Newsletter"),
     ("shield", "Roles & Perms"), ("settings", "Settings"),
 ]
 
@@ -66,12 +68,12 @@ _ROLE_ALLOWED_MODULES = {
     "admin": {
         "Dashboard", "Website CMS", "Courses", "Instructors", "Students",
         "Registrations", "Certificates", "Tutor Apps", "Messages",
-        "Payment Methods", "Announcements", "Email Templates", "Settings",
+        "Payment Methods", "Announcements", "Email Templates", "Newsletter", "Settings",
     },
     "instructor": {"Dashboard"},
     "content_manager": {
         "Dashboard", "Website CMS", "Courses", "Instructors",
-        "Messages", "Announcements", "Email Templates",
+        "Messages", "Announcements", "Email Templates", "Newsletter",
     },
 }
 
@@ -155,6 +157,7 @@ def render_admin():
         "Payment Methods": _admin_payment_methods,
         "Announcements": _admin_announcements,
         "Email Templates": _admin_email_templates,
+        "Newsletter": _admin_newsletter,
         "Roles & Perms": _admin_roles_permissions,
         "Settings": _admin_settings,
     }
@@ -1468,6 +1471,78 @@ def _del_msg(mid):
         db.close()
 
 
+# ─── Newsletter Subscribers ───────────────────────────────────────────────────
+def _admin_newsletter():
+    st.markdown(f'<h3 style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--ink-900);margin-bottom:16px;">{icon("mail", size=17)} Newsletter Subscribers</h3>', unsafe_allow_html=True)
+
+    db = get_db_session()
+    try:
+        subs = db.query(NewsletterSubscriber).order_by(NewsletterSubscriber.subscribed_at.desc()).all()
+    finally:
+        db.close()
+
+    active_count = sum(1 for s in subs if s.is_active)
+    st.markdown(f"**{active_count}** active subscriber(s) out of **{len(subs)}** total. New announcements are emailed automatically to active subscribers.")
+
+    with st.form("add_subscriber_manual"):
+        new_email = st.text_input("Add subscriber manually")
+        if st.form_submit_button("Add Subscriber"):
+            new_email_clean = (new_email or "").strip().lower()
+            if not new_email_clean or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", new_email_clean):
+                st.error("Please enter a valid email address.")
+            else:
+                db = get_db_session()
+                try:
+                    existing = db.query(NewsletterSubscriber).filter(
+                        NewsletterSubscriber.email == new_email_clean
+                    ).first()
+                    if existing:
+                        existing.is_active = True
+                        st.info("Subscriber already existed — marked active.")
+                    else:
+                        db.add(NewsletterSubscriber(email=new_email_clean))
+                        st.success("Subscriber added.")
+                    db.commit()
+                    st.rerun()
+                except Exception as e:
+                    db.rollback()
+                    st.error(str(e))
+                finally:
+                    db.close()
+
+    if not subs:
+        st.info("No subscribers yet.")
+        return
+
+    for s in subs:
+        badge = '<span class="nmt-badge nmt-badge-approved">Active</span>' if s.is_active else '<span class="nmt-badge nmt-badge-neutral">Inactive</span>'
+        with st.expander(s.email):
+            st.markdown(badge, unsafe_allow_html=True)
+            st.write(f"Subscribed: {s.subscribed_at.strftime('%b %d, %Y')}")
+            col1, col2 = st.columns(2)
+            with col1:
+                lbl = "Deactivate" if s.is_active else "Activate"
+                if st.button(lbl, key=f"toggle_sub_{s.id}"):
+                    db = get_db_session()
+                    try:
+                        row = db.query(NewsletterSubscriber).filter(NewsletterSubscriber.id == s.id).first()
+                        row.is_active = not row.is_active
+                        db.commit()
+                        st.rerun()
+                    finally:
+                        db.close()
+            with col2:
+                if st.button("Delete", key=f"del_sub_{s.id}"):
+                    db = get_db_session()
+                    try:
+                        row = db.query(NewsletterSubscriber).filter(NewsletterSubscriber.id == s.id).first()
+                        db.delete(row)
+                        db.commit()
+                        st.rerun()
+                    finally:
+                        db.close()
+
+
 # ─── Announcements ────────────────────────────────────────────────────────────
 def _admin_announcements():
     st.markdown(f'<h3 style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--ink-900);margin-bottom:16px;">{icon("bell", size=17)} Manage Announcements</h3>', unsafe_allow_html=True)
@@ -1481,17 +1556,33 @@ def _admin_announcements():
                 st.error("Title and content are required.")
             else:
                 db = get_db_session()
+                sub_emails = []
+                saved_ok = False
                 try:
                     db.add(Announcement(title=title, content=content, is_active=is_active))
                     db.commit()
                     _get_active_announcements.clear()
-                    flash_message("Announcement posted.")
-                    st.rerun()
+                    saved_ok = True
+                    if is_active:
+                        subs = db.query(NewsletterSubscriber).filter(
+                            NewsletterSubscriber.is_active == True
+                        ).all()
+                        sub_emails = [s.email for s in subs]
                 except Exception as e:
                     db.rollback()
                     st.error(str(e))
                 finally:
                     db.close()
+                if saved_ok:
+                    if sub_emails:
+                        email_body = f"<h2 style='color:#0F2D6B;'>{title}</h2><div style='background:#F8FAFC;border-radius:8px;padding:16px;'>{content}</div>"
+                        for sub_email in sub_emails:
+                            try:
+                                send_email(sub_email, title, _base_template(email_body))
+                            except Exception:
+                                pass
+                    flash_message("Announcement posted.")
+                    st.rerun()
 
     db = get_db_session()
     try:
@@ -1953,3 +2044,4 @@ def _admin_roles_permissions():
                         st.error(str(e))
                     finally:
                         db.close()
+                        
