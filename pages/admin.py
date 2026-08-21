@@ -1733,20 +1733,33 @@ def _admin_settings():
                 contact_phone = st.text_input("Contact Phone", value=settings.get("contact_phone", ""))
                 contact_address = st.text_input("Address", value=settings.get("contact_address", ""))
                 office_hours = st.text_input("Office Hours", value=settings.get("office_hours", "Mon–Sat: 9 AM–6 PM"))
+                whatsapp_number = st.text_input(
+                    "WhatsApp Support Number",
+                    value=settings.get("whatsapp_number", ""),
+                    help="Include country code. Any format is fine (e.g. +92 300 1234567) — "
+                         "it's normalized automatically when saved. Leave blank to hide the "
+                         "floating WhatsApp button on the site.",
+                )
             with col2:
                 stat_students = st.text_input("Students Stat", value=settings.get("stat_students", "500+"))
                 stat_courses = st.text_input("Courses Stat", value=settings.get("stat_courses", "12+"))
                 stat_certs = st.text_input("Certificates Stat", value=settings.get("stat_certificates", "300+"))
                 stat_instructors = st.text_input("Instructors Stat", value=settings.get("stat_instructors", "10+"))
             if st.form_submit_button("Save Contact Settings", type="primary"):
-                for k, v in {
-                    "contact_email": contact_email, "contact_phone": contact_phone,
-                    "contact_address": contact_address, "office_hours": office_hours,
-                    "stat_students": stat_students, "stat_courses": stat_courses,
-                    "stat_certificates": stat_certs, "stat_instructors": stat_instructors,
-                }.items():
-                    update_setting(k, v)
-                st.success("Saved.")
+                from utils.helpers import normalize_whatsapp_number
+                whatsapp_clean = normalize_whatsapp_number(whatsapp_number)
+                if whatsapp_number.strip() and not whatsapp_clean:
+                    st.error("WhatsApp number looks invalid — please include a country code (7–15 digits total).")
+                else:
+                    for k, v in {
+                        "contact_email": contact_email, "contact_phone": contact_phone,
+                        "contact_address": contact_address, "office_hours": office_hours,
+                        "whatsapp_number": whatsapp_clean,
+                        "stat_students": stat_students, "stat_courses": stat_courses,
+                        "stat_certificates": stat_certs, "stat_instructors": stat_instructors,
+                    }.items():
+                        update_setting(k, v)
+                    st.success("Saved.")
 
     with tab_social:
         with st.form("settings_social"):
