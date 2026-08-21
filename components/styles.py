@@ -483,42 +483,56 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
 .nmt-footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 22px; display: flex; justify-content: space-between;
   align-items: center; font-size: 12.5px; color: #6B7A98; flex-wrap: wrap; gap: 8px; }
 
-/* Newsletter bar between the footer grid and the copyright bar — same navy
-   background so it reads as one continuous footer block, with a distinct
-   card treatment so the subscribe box reads as an intentional CTA rather
-   than a stray form. */
-.st-key-footer_newsletter { background: var(--navy-950); padding: 8px 24px 40px; margin-top: 0; }
-.st-key-footer_newsletter .nmt-footer-nl-card {
-  max-width: 620px; margin: 0 auto 22px; text-align: center;
-  background: linear-gradient(160deg, rgba(32,86,214,0.14), rgba(255,255,255,0.03));
-  border: 1px solid rgba(255,255,255,0.10); border-radius: 18px;
-  padding: 34px 28px 26px; position: relative;
+/* Newsletter bar — a bordered strip integrated between the footer grid and
+   the copyright bar, same navy background as the rest of the footer so it
+   reads as one continuous block. Heading/text sit left, the subscribe form
+   sits right on desktop (Streamlit's own horizontal-block layout already
+   wraps these to a clean vertical stack on narrow/mobile widths). */
+.st-key-footer_newsletter {
+  background: var(--navy-950);
+  border-top: 1px solid rgba(255,255,255,0.09);
+  border-bottom: 1px solid rgba(255,255,255,0.09);
+  padding: 30px 24px;
+  margin: 4px 0 0;
 }
-.st-key-footer_newsletter .nmt-footer-nl-icon {
-  width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 14px;
-  display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, var(--blue-600), var(--navy-900));
-  box-shadow: 0 6px 18px rgba(32,86,214,0.35);
+.st-key-footer_newsletter > div { max-width: 1180px; margin: 0 auto; }
+.st-key-footer_newsletter .nmt-footer-nl-text { padding-right: 12px; }
+.st-key-footer_newsletter .nmt-footer-nl-heading {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-head); font-weight: 700; font-size: 16px;
+  color: #fff; margin-bottom: 5px;
 }
-.st-key-footer_newsletter .nmt-footer-nl-heading { font-family: var(--font-head); font-weight: 700; font-size: 17px; color: #fff; margin-bottom: 6px; }
-.st-key-footer_newsletter .nmt-footer-nl-sub { font-size: 13px; color: #A9B6CE; margin: 0 0 22px; }
-.st-key-footer_newsletter div[data-testid="stForm"] { border: none; padding: 0; background: transparent; max-width: 480px; margin: 0 auto; }
-.st-key-footer_newsletter div[data-testid="stForm"] div[data-testid="stHorizontalBlock"] {
-  gap: 0 !important; background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.16); border-radius: 999px;
-  overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.22);
-}
+.st-key-footer_newsletter .nmt-footer-nl-sub { font-size: 13px; color: #A9B6CE; margin: 0; line-height: 1.6; }
+.st-key-footer_newsletter div[data-testid="stHorizontalBlock"]:has(div[data-testid="stForm"]),
+.st-key-footer_newsletter div[data-testid="stVerticalBlock"] { align-items: center; }
+.st-key-footer_newsletter div[data-testid="stForm"] { border: none; padding: 0; background: transparent; margin: 0; }
+.st-key-footer_newsletter div[data-testid="stForm"] div[data-testid="stHorizontalBlock"] { gap: 10px !important; align-items: stretch; }
 .st-key-footer_newsletter div[data-testid="stTextInput"] input {
-  background: transparent; border: none; color: #fff;
-  padding: 13px 20px; font-size: 14px; border-radius: 0; box-shadow: none;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(255,255,255,0.16);
+  color: var(--ink-900);
+  padding: 11px 16px; font-size: 13.5px;
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
-.st-key-footer_newsletter div[data-testid="stTextInput"] input:focus { box-shadow: none; }
-.st-key-footer_newsletter div[data-testid="stTextInput"] input::placeholder { color: #8493AD; }
+.st-key-footer_newsletter div[data-testid="stTextInput"] input::placeholder { color: var(--ink-500); }
+.st-key-footer_newsletter div[data-testid="stTextInput"] input:focus {
+  border-color: var(--blue-600);
+  box-shadow: 0 0 0 3px rgba(32,86,214,0.28);
+  outline: none;
+}
 .st-key-footer_newsletter button[kind="secondaryFormSubmit"],
 .st-key-footer_newsletter button[kind="formSubmit"] {
-  background: linear-gradient(135deg, var(--blue-600), var(--navy-900));
-  color: #fff; border: none; border-radius: 0 !important; font-weight: 600;
-  height: 100%; padding: 13px 22px; white-space: nowrap;
+  background: var(--blue-600);
+  color: #fff; border: none; border-radius: var(--radius-sm) !important;
+  font-weight: 600; padding: 11px 20px; white-space: nowrap;
+  transition: background .15s ease, transform .15s ease;
+}
+.st-key-footer_newsletter button[kind="secondaryFormSubmit"]:hover,
+.st-key-footer_newsletter button[kind="formSubmit"]:hover {
+  background: var(--navy-900);
+  transform: translateY(-1px);
 }
 
 /* ───────────────────── Animations ───────────────────── */
@@ -957,6 +971,8 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
   .nmt-footer-grid { grid-template-columns: 1fr; gap: 32px; }
   .nmt-footer p.desc { max-width: 100%; }
   .nmt-footer-bottom { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .st-key-footer_newsletter { padding: 26px 20px; }
+  .st-key-footer_newsletter .nmt-footer-nl-text { padding-right: 0; margin-bottom: 16px; text-align: left; }
 }
 
 /* ───────────────────── Mobile responsiveness pass ─────────────────────
