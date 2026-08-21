@@ -22,6 +22,7 @@ from utils.email_service import (
     send_registration_approved, send_registration_rejected,
     send_tutor_application_approved, send_tutor_application_rejected,
     send_certificate_issued,
+    send_announcement_email,
     send_email, _base_template, ADMIN_EMAIL
 )
 from utils.helpers import (
@@ -1591,10 +1592,9 @@ def _admin_announcements():
                     sent_count = 0
                     failed_count = 0
                     if sub_emails:
-                        email_body = f"<h2 style='color:#0F2D6B;'>{title}</h2><div style='background:#F8FAFC;border-radius:8px;padding:16px;'>{content}</div>"
                         for sub_email in sub_emails:
                             try:
-                                if send_email(sub_email, title, _base_template(email_body)):
+                                if send_announcement_email(title, content, sub_email):
                                     sent_count += 1
                                 else:
                                     failed_count += 1
