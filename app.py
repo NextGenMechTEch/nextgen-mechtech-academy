@@ -74,7 +74,7 @@ except Exception as e:
 
 # ─── Imports ─────────────────────────────────────────────────────────────────
 from components.styles import inject_css
-from components.navbar import render_visible_navbar, render_footer
+from components.navbar import render_visible_navbar, render_footer, render_whatsapp_button
 from pages.home import render_home
 from pages.courses import render_courses
 from pages.careers import render_careers
@@ -230,3 +230,14 @@ if current_page not in {"admin", "dashboard", "login"}:
             render_footer()
         except Exception as exc:
             _show_page_error(exc, "footer")
+
+# ─── Floating WhatsApp Support Button ────────────────────────────────────────
+# Shown on every public-facing page (everything except the internal admin
+# backend). Renders nothing if no valid number is configured in Admin Panel
+# -> Website Settings -> Contact & Stats.
+if current_page not in ADMIN_PAGES:
+    with perf_timer("render_whatsapp_button"):
+        try:
+            render_whatsapp_button()
+        except Exception as exc:
+            _show_page_error(exc, "whatsapp_button")
