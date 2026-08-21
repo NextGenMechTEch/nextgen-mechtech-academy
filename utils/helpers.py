@@ -267,6 +267,20 @@ def update_setting(key: str, value: str) -> None:
     get_all_settings.clear()
 
 
+def normalize_whatsapp_number(raw: str) -> str:
+    """Normalize a phone number to a bare international-format digit string
+    (no '+', spaces, dashes, or parentheses) suitable for a wa.me link.
+    Returns '' if the input doesn't contain a plausible international number
+    (7-15 digits, per the E.164 max length) so callers can detect "not set"
+    vs. a real number without guessing at formatting.
+    """
+    import re
+    digits = re.sub(r"\D", "", raw or "")
+    if 7 <= len(digits) <= 15:
+        return digits
+    return ""
+
+
 # ─── Payment methods (configurable via Admin Panel — no code changes needed) ─
 def _payment_method_to_dict(row) -> dict:
     return {
