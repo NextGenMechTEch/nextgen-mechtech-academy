@@ -1,5 +1,4 @@
 import json
-import re
 import streamlit as st
 import textwrap
 
@@ -10,7 +9,7 @@ from utils.helpers import (
 )
 from utils.cloudinary_service import resolve_src
 from database.connection import get_db_session
-from database.models import Course, Announcement, Instructor, NewsletterSubscriber
+from database.models import Course, Announcement, Instructor
 from pages.cms_admin import get_cms_section, get_cms_sections
 from components.instructor_slider import render_instructors_slider
 
@@ -544,53 +543,6 @@ def render_home():
         with cta_c:
             if st.button(cta_btn, key="cta_enrol", use_container_width=True, type="primary"):
                 st.session_state.page = "courses"; st.rerun()
-
-    # ─── NEWSLETTER ────────────────────────────────────────────────────────
-    nl_sec = home_sections.get("newsletter", _CMS_SECTION_DEFAULT)
-    if nl_sec.get("is_visible", True):
-        nl_heading = settings.get("newsletter_heading", "Stay Updated")
-        nl_sub     = settings.get("newsletter_sub", "Get course updates and announcements in your inbox.")
-        nl_btn     = settings.get("newsletter_btn", "Subscribe")
-
-        st.markdown(html_block(f"""
-        <div class="nmt-shell nmt-section" style="text-align:center;">
-          <div class="nmt-eyebrow">{icon("mail", size=13, color="var(--brand-600)")} Newsletter</div>
-          <h2 class="nmt-h2">{nl_heading}</h2>
-          <p style="color:var(--ink-500);font-size:14px;max-width:480px;margin:8px auto 0;">{nl_sub}</p>
-        </div>
-        """), unsafe_allow_html=True)
-
-        _, nl_c, _ = st.columns([1.5, 2, 1.5])
-        with nl_c:
-            with st.form("newsletter_subscribe_form", clear_on_submit=True):
-                nl_email = st.text_input("Email", placeholder="you@example.com", label_visibility="collapsed")
-                nl_submitted = st.form_submit_button(nl_btn, use_container_width=True, type="primary")
-            if nl_submitted:
-                nl_email_clean = (nl_email or "").strip().lower()
-                if not nl_email_clean or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", nl_email_clean):
-                    st.error("Please enter a valid email address.")
-                else:
-                    db = get_db_session()
-                    try:
-                        existing = db.query(NewsletterSubscriber).filter(
-                            NewsletterSubscriber.email == nl_email_clean
-                        ).first()
-                        if existing:
-                            if existing.is_active:
-                                st.info("You're already subscribed!")
-                            else:
-                                existing.is_active = True
-                                db.commit()
-                                st.success("Welcome back! You're subscribed again.")
-                        else:
-                            db.add(NewsletterSubscriber(email=nl_email_clean))
-                            db.commit()
-                            st.success("Thanks for subscribing!")
-                    except Exception as e:
-                        db.rollback()
-                        st.error(str(e))
-                    finally:
-                        db.close()
 
     # ─── ACTIVE DB ANNOUNCEMENTS ──────────────────────────────────────────
     active_anns = _get_active_announcements(3)
