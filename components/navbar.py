@@ -1,11 +1,14 @@
 """
 Navigation bar and footer — CMS-driven with database fallback to hardcoded defaults.
 """
+import re
 import streamlit as st
 import textwrap
 import json
 from components.icons import icon
 from utils.helpers import get_logo_base64, get_all_settings, html_block
+from database.connection import get_db_session
+from database.models import NewsletterSubscriber
 
 
 _DEFAULT_NAV = [
@@ -209,6 +212,59 @@ def render_footer():
             <a class="flink" {terms_href}>Terms of Service</a>
           </div>
         </div>
+      </div>
+    </div>
+    """), unsafe_allow_html=True)
+
+    # Newsletter bar — dark navy section directly below the grid (below the
+    # brand column's social icons in reading order), functionally wired to
+    # NewsletterSubscriber. Wrapped in a keyed container so CSS in styles.py
+    # (.st-key-footer_newsletter) can theme it to match the footer above/below.
+    with st.container(key="footer_newsletter"):
+        st.markdown(html_block("""
+        <div class="nmt-footer-nl-inner">
+          <div class="nmt-footer-nl-heading">Get Course Updates</div>
+          <p class="nmt-footer-nl-sub">Subscribe for new courses &amp; announcements.</p>
+        </div>
+        """), unsafe_allow_html=True)
+        _, nl_form_col, _ = st.columns([1, 2, 1])
+        with nl_form_col:
+            with st.form("footer_newsletter_form", clear_on_submit=True, border=False):
+                nl_col1, nl_col2 = st.columns([3, 1])
+                with nl_col1:
+                    nl_email = st.text_input("Email", placeholder="you@example.com", label_visibility="collapsed", key="footer_nl_email")
+                with nl_col2:
+                    nl_submitted = st.form_submit_button("Subscribe", use_container_width=True)
+            if nl_submitted:
+                nl_email_clean = (nl_email or "").strip().lower()
+                if not nl_email_clean or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", nl_email_clean):
+                    st.error("Please enter a valid email address.")
+                else:
+                    db = get_db_session()
+                    try:
+                        existing = db.query(NewsletterSubscriber).filter(
+                            NewsletterSubscriber.email == nl_email_clean
+                        ).first()
+                        if existing:
+                            if existing.is_active:
+                                st.info("You're already subscribed!")
+                            else:
+                                existing.is_active = True
+                                db.commit()
+                                st.success("Welcome back! You're subscribed again.")
+                        else:
+                            db.add(NewsletterSubscriber(email=nl_email_clean))
+                            db.commit()
+                            st.success("Thanks for subscribing!")
+                    except Exception as e:
+                        db.rollback()
+                        st.error(str(e))
+                    finally:
+                        db.close()
+
+    st.markdown(html_block(f"""
+    <div class="nmt-footer nmt-footer-bottombar">
+      <div class="nmt-footer-inner">
         <div class="nmt-footer-bottom">
           <span>{copyright_t}</span>
           <span style="color:#4A5568;font-size:12px;">Powered by NextGen MechTech Academy</span>
