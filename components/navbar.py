@@ -275,3 +275,47 @@ def render_footer():
       </div>
     </div>
     """), unsafe_allow_html=True)
+
+
+def render_whatsapp_button():
+    """Floating WhatsApp support button, fixed bottom-right on every
+    public-facing page. Reads the number from WebsiteSettings (set via
+    Admin Panel -> Website Settings -> Contact & Stats) rather than any
+    hard-coded value. If no valid number is configured, nothing is rendered
+    so there's never a broken/dead link on the site.
+    """
+    from utils.helpers import normalize_whatsapp_number
+
+    settings = get_all_settings()
+    raw_number = settings.get("whatsapp_number", "")
+    number = normalize_whatsapp_number(raw_number)
+    if not number:
+        return
+
+    message = "Hello, I would like to know more about your courses."
+    from urllib.parse import quote
+    wa_url = f"https://wa.me/{number}?text={quote(message)}"
+
+    wa_svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" '
+        'fill="#fff" style="display:block">'
+        '<path d="M12.001 2C6.478 2 2 6.478 2 12c0 1.917.526 3.729 1.53 5.29L2 22l4.83-1.518A9.943 '
+        '9.943 0 0 0 12.001 22c5.523 0 10-4.478 10-10S17.524 2 12.001 2zm.001 18.203a8.19 8.19 0 0 '
+        '1-4.408-1.284l-.316-.187-3.27 1.03 1.049-3.19-.207-.328a8.176 8.176 0 0 1-1.267-4.443c0-4.523 '
+        '3.679-8.203 8.201-8.203 4.523 0 8.202 3.68 8.202 8.203s-3.679 8.203-8.202 8.203z"/>'
+        '<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-'
+        '.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-'
+        '1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-'
+        '.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-'
+        '.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 '
+        '2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 '
+        '1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-'
+        '.57-.347z"/></svg>'
+    )
+
+    st.markdown(html_block(f"""
+    <a class="nmt-wa-fab" href="{wa_url}" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
+      {wa_svg}
+      <span class="nmt-wa-fab-label">Support</span>
+    </a>
+    """), unsafe_allow_html=True)
