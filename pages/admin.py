@@ -1551,6 +1551,12 @@ def _admin_announcements():
         title = st.text_input("Announcement Title *")
         content = st.text_area("Content *", height=100)
         is_active = st.checkbox("Active (visible on website)", value=True)
+        send_to = st.radio(
+            "Email this announcement to",
+            ["All Subscribers", "Registered Students Only", "Both"],
+            index=0,
+            horizontal=True,
+        )
         if st.form_submit_button("Post Announcement", type="primary"):
             if not title or not content:
                 st.error("Title and content are required.")
@@ -1564,24 +1570,44 @@ def _admin_announcements():
                     _get_active_announcements.clear()
                     saved_ok = True
                     if is_active:
-                        subs = db.query(NewsletterSubscriber).filter(
-                            NewsletterSubscriber.is_active == True
-                        ).all()
-                        sub_emails = [s.email for s in subs]
+                        email_set = set()
+                        if send_to in ("All Subscribers", "Both"):
+                            subs = db.query(NewsletterSubscriber).filter(
+                                NewsletterSubscriber.is_active == True
+                            ).all()
+                            email_set.update(s.email for s in subs)
+                        if send_to in ("Registered Students Only", "Both"):
+                            students = db.query(User).filter(
+                                User.role == UserRole.student, User.is_active == True
+                            ).all()
+                            email_set.update(s.email for s in students)
+                        sub_emails = list(email_set)
                 except Exception as e:
                     db.rollback()
                     st.error(str(e))
                 finally:
                     db.close()
                 if saved_ok:
+                    sent_count = 0
+                    failed_count = 0
                     if sub_emails:
                         email_body = f"<h2 style='color:#0F2D6B;'>{title}</h2><div style='background:#F8FAFC;border-radius:8px;padding:16px;'>{content}</div>"
                         for sub_email in sub_emails:
                             try:
-                                send_email(sub_email, title, _base_template(email_body))
+                                if send_email(sub_email, title, _base_template(email_body)):
+                                    sent_count += 1
+                                else:
+                                    failed_count += 1
                             except Exception:
-                                pass
-                    flash_message("Announcement posted.")
+                                failed_count += 1
+                    if sub_emails:
+                        flash_message(
+                            f"Announcement posted. Emailed {sent_count}/{len(sub_emails)} recipient(s)"
+                            + (f" — {failed_count} failed (check email settings)." if failed_count else "."),
+                            kind=("success" if failed_count == 0 else "warning"),
+                        )
+                    else:
+                        flash_message("Announcement posted.")
                     st.rerun()
 
     db = get_db_session()
@@ -2044,4 +2070,3 @@ def _admin_roles_permissions():
                         st.error(str(e))
                     finally:
                         db.close()
-                        
