@@ -484,20 +484,41 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
   align-items: center; font-size: 12.5px; color: #6B7A98; flex-wrap: wrap; gap: 8px; }
 
 /* Newsletter bar between the footer grid and the copyright bar — same navy
-   background so it reads as one continuous footer block. */
-.st-key-footer_newsletter { background: var(--navy-950); padding: 4px 24px 32px; margin-top: -1rem; }
-.st-key-footer_newsletter .nmt-footer-nl-inner { max-width: 1180px; margin: 0 auto; text-align: center; padding-bottom: 18px; }
-.st-key-footer_newsletter .nmt-footer-nl-heading { font-family: var(--font-head); font-weight: 700; font-size: 15px; color: #fff; margin-bottom: 4px; }
-.st-key-footer_newsletter .nmt-footer-nl-sub { font-size: 12.5px; color: #8C9AB5; margin: 0; }
-.st-key-footer_newsletter div[data-testid="stForm"] { border: none; padding: 0; background: transparent; max-width: 480px; margin: 0 auto; }
-.st-key-footer_newsletter div[data-testid="stTextInput"] input {
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
-  color: #fff; border-radius: var(--radius-sm);
+   background so it reads as one continuous footer block, with a distinct
+   card treatment so the subscribe box reads as an intentional CTA rather
+   than a stray form. */
+.st-key-footer_newsletter { background: var(--navy-950); padding: 8px 24px 40px; margin-top: 0; }
+.st-key-footer_newsletter .nmt-footer-nl-card {
+  max-width: 620px; margin: 0 auto 22px; text-align: center;
+  background: linear-gradient(160deg, rgba(32,86,214,0.14), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.10); border-radius: 18px;
+  padding: 34px 28px 26px; position: relative;
 }
-.st-key-footer_newsletter div[data-testid="stTextInput"] input::placeholder { color: #6B7A98; }
+.st-key-footer_newsletter .nmt-footer-nl-icon {
+  width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 14px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--blue-600), var(--navy-900));
+  box-shadow: 0 6px 18px rgba(32,86,214,0.35);
+}
+.st-key-footer_newsletter .nmt-footer-nl-heading { font-family: var(--font-head); font-weight: 700; font-size: 17px; color: #fff; margin-bottom: 6px; }
+.st-key-footer_newsletter .nmt-footer-nl-sub { font-size: 13px; color: #A9B6CE; margin: 0 0 22px; }
+.st-key-footer_newsletter div[data-testid="stForm"] { border: none; padding: 0; background: transparent; max-width: 480px; margin: 0 auto; }
+.st-key-footer_newsletter div[data-testid="stForm"] div[data-testid="stHorizontalBlock"] {
+  gap: 0 !important; background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.16); border-radius: 999px;
+  overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+}
+.st-key-footer_newsletter div[data-testid="stTextInput"] input {
+  background: transparent; border: none; color: #fff;
+  padding: 13px 20px; font-size: 14px; border-radius: 0; box-shadow: none;
+}
+.st-key-footer_newsletter div[data-testid="stTextInput"] input:focus { box-shadow: none; }
+.st-key-footer_newsletter div[data-testid="stTextInput"] input::placeholder { color: #8493AD; }
 .st-key-footer_newsletter button[kind="secondaryFormSubmit"],
 .st-key-footer_newsletter button[kind="formSubmit"] {
-  background: var(--blue-600); color: #fff; border: none;
+  background: linear-gradient(135deg, var(--blue-600), var(--navy-900));
+  color: #fff; border: none; border-radius: 0 !important; font-weight: 600;
+  height: 100%; padding: 13px 22px; white-space: nowrap;
 }
 
 /* ───────────────────── Animations ───────────────────── */
