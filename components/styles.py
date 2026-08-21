@@ -492,7 +492,7 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
   background: var(--navy-950);
   border-top: 1px solid rgba(255,255,255,0.09);
   border-bottom: 1px solid rgba(255,255,255,0.09);
-  padding: 20px 24px;
+  padding: 28px 24px;
   margin: 4px 0 0;
 }
 .st-key-footer_newsletter > div { max-width: 1180px; margin: 0 auto; }
