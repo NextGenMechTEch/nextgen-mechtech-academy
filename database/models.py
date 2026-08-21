@@ -218,6 +218,15 @@ class ContactMessage(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class NewsletterSubscriber(Base):
+    __tablename__ = "newsletter_subscribers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(200), unique=True, nullable=False)
+    is_active = Column(Boolean, default=True)
+    subscribed_at = Column(DateTime, default=datetime.utcnow)
+
+
 class WebsiteSettings(Base):
     __tablename__ = "website_settings"
 
