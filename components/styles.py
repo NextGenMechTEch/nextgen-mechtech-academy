@@ -1037,6 +1037,41 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
 @media (max-width: 380px) {
   .nmt-mini-stats-grid { grid-template-columns: 1fr !important; }
 }
+
+/* ───────────────────── Floating WhatsApp Support Button ───────────────────── */
+.nmt-wa-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 999;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: #25D366;
+  color: #fff;
+  text-decoration: none;
+  padding: 12px 18px 12px 14px;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+  transition: background .15s ease, box-shadow .15s ease;
+}
+.nmt-wa-fab:hover { background: #1EBE5A; box-shadow: 0 6px 18px rgba(0,0,0,0.26); }
+.nmt-wa-fab-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13.5px;
+  color: #fff;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .nmt-wa-fab {
+    right: 16px;
+    bottom: 16px;
+    padding: 13px;
+    border-radius: 50%;
+  }
+  .nmt-wa-fab-label { display: none; }
+}
 </style>
 """
 
