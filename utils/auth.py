@@ -10,7 +10,7 @@ import bcrypt
 import streamlit as st
 
 from database.connection import get_db_session
-from database.models import User, UserRole
+from database.models import User, UserRole, NewsletterSubscriber
 
 
 # ─── Login lockout (brute-force protection) ─────────────────────────────────
@@ -153,6 +153,22 @@ def register_user(full_name: str, email: str, password: str):
         )
         db.add(user)
         db.commit()
+
+        # Auto-subscribe the new student to the newsletter so they receive
+        # announcement emails automatically, without needing to subscribe
+        # separately. Wrapped so a failure here never blocks the (already
+        # committed) account creation above.
+        try:
+            existing_sub = db.query(NewsletterSubscriber).filter(
+                NewsletterSubscriber.email == email_norm
+            ).first()
+            if existing_sub:
+                existing_sub.is_active = True
+            else:
+                db.add(NewsletterSubscriber(email=email_norm))
+            db.commit()
+        except Exception:
+            db.rollback()
 
         send_verification_email(user.full_name, user.email, token)
         return True, "registration_pending"
