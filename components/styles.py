@@ -499,9 +499,13 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
 .st-key-footer_newsletter div[data-testid="stHorizontalBlock"]:has(div[data-testid="stForm"]) {
   align-items: center;
 }
+.st-key-footer_newsletter div[data-testid="stForm"] div[data-testid="stVerticalBlock"] {
+  justify-content: center;
+}
 .st-key-footer_newsletter .nmt-footer-nl-text {
   padding-right: 12px;
   display: flex; flex-direction: column; justify-content: center;
+  height: 100%;
 }
 .st-key-footer_newsletter .nmt-footer-nl-heading {
   display: flex; align-items: center; gap: 8px;
@@ -533,16 +537,17 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
 }
 .st-key-footer_newsletter button[kind="secondaryFormSubmit"],
 .st-key-footer_newsletter button[kind="formSubmit"] {
-  background: var(--amber-500);
-  color: var(--navy-950); border: none; border-radius: var(--radius-sm) !important;
-  font-weight: 700; font-size: 13px; padding: 9px 16px; white-space: nowrap;
-  transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
+  background: var(--amber-500) !important;
+  color: var(--navy-950) !important; border: none !important; border-radius: var(--radius-sm) !important;
+  font-weight: 700 !important; font-size: 13px; padding: 9px 16px; white-space: nowrap;
+  box-shadow: none !important;
+  transition: background .15s ease;
 }
 .st-key-footer_newsletter button[kind="secondaryFormSubmit"]:hover,
 .st-key-footer_newsletter button[kind="formSubmit"]:hover {
-  background: var(--amber-400);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245,158,11,0.32);
+  background: var(--amber-600) !important;
+  color: var(--navy-950) !important;
+  box-shadow: none !important;
 }
 
 /* ───────────────────── Animations ───────────────────── */
