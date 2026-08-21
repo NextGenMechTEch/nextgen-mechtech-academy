@@ -228,14 +228,14 @@ def render_footer():
             st.markdown(html_block(f"""
             <div class="nmt-footer-nl-text">
               <div class="nmt-footer-nl-heading">{icon("mail", size=15, color="var(--amber-400)")} Get Course Updates</div>
-              <p class="nmt-footer-nl-sub">Subscribe for new courses &amp; announcements.</p>
+              <p class="nmt-footer-nl-sub">Get updates on new courses, workshops, and opportunities.</p>
             </div>
             """), unsafe_allow_html=True)
         with nl_form_col:
             with st.form("footer_newsletter_form", clear_on_submit=True, border=False):
                 nl_col1, nl_col2 = st.columns([3, 1], gap="small")
                 with nl_col1:
-                    nl_email = st.text_input("Email", placeholder="you@example.com", label_visibility="collapsed", key="footer_nl_email")
+                    nl_email = st.text_input("Email", placeholder="Enter your email address", label_visibility="collapsed", key="footer_nl_email")
                 with nl_col2:
                     nl_submitted = st.form_submit_button("Subscribe", use_container_width=True)
             if nl_submitted:
