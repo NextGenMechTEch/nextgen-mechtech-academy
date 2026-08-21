@@ -390,6 +390,18 @@ def send_tutor_application_rejected(name: str, to_email: str, reason: str = "") 
                       _base_template(content, "An update on your tutor application"))
 
 
+def send_announcement_email(title: str, content: str, to_email: str) -> bool:
+    content_html = content.replace("\n", "<br>")
+    body = f"""
+    <h2 style="color:{_BRAND_NAVY};margin:0 0 12px;">📢 {title}</h2>
+    <div style="background:#F6F8FB;border:1px solid #E3E8F0;border-radius:10px;padding:16px 18px;color:#0E1726;font-size:14px;line-height:1.7;">
+      {content_html}
+    </div>
+    <p style="color:#67748B;font-size:12.5px;margin-top:18px;">You're receiving this because you're subscribed to NextGen MechTech Academy updates.</p>
+    """
+    return send_email(to_email, title, _base_template(body, title))
+
+
 def send_certificate_issued(full_name: str, to_email: str, course_title: str,
                              certificate_id: str, verify_url: str) -> bool:
     content = f"""
