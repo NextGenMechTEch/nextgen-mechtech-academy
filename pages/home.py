@@ -9,7 +9,7 @@ from utils.helpers import (
 )
 from utils.cloudinary_service import resolve_src
 from database.connection import get_db_session
-from database.models import Course, Announcement, Instructor, Achievement
+from database.models import Course, Announcement, Instructor, Event
 from pages.cms_admin import get_cms_section, get_cms_sections
 from components.instructor_slider import render_instructors_slider
 
@@ -53,20 +53,22 @@ def _get_active_announcements(limit: int) -> list[dict]:
 
 
 # TTL=180s: mirrors _get_featured_courses — content only changes when an
-# admin edits an event. Returns plain dicts, no per-user data.
+# admin adds/edits/publishes an event. Returns plain dicts, no per-user data.
 @st.cache_data(ttl=180, show_spinner=False)
-def _get_active_achievements(limit: int = 6) -> list[dict]:
+def _get_home_events(limit: int = 3) -> list[dict]:
     db = get_db_session()
     try:
-        rows = (db.query(Achievement)
-                .filter(Achievement.is_active == True)
-                .order_by(Achievement.display_order, Achievement.created_at.desc())
+        rows = (db.query(Event)
+                .filter(Event.is_published == True)
+                .order_by(Event.is_featured.desc(), Event.display_order, Event.created_at.desc())
                 .limit(limit).all())
         return [{
-            "id": a.id, "title": a.title, "description": a.description,
-            "event_date": a.event_date, "stat_badge": a.stat_badge,
-            "youtube_url": a.youtube_url, "image_urls": a.image_urls or [],
-        } for a in rows]
+            "id": e.id, "title": e.title, "category": e.category,
+            "event_date": e.event_date, "event_time": e.event_time,
+            "location": e.location, "participants_count": e.participants_count,
+            "host_name": e.host_name, "short_description": e.short_description,
+            "cover_image": e.cover_image,
+        } for e in rows]
     finally:
         db.close()
 
@@ -439,52 +441,8 @@ def render_home():
             st.markdown("</div>", unsafe_allow_html=True)
 
     # ─── COMMUNITY & EVENTS ────────────────────────────────────────────────
-    events = _get_active_achievements(6)
+    events = _get_home_events(3)
     if events:
-        cards_html = ""
-        for ev in events:
-            date_html = (
-                f'<div class="nmt-ach-date">{icon("calendar", size=12, color="var(--ink-400)")} {ev["event_date"].strftime("%b %d, %Y")}</div>'
-                if ev["event_date"] else ""
-            )
-            badge_html = (
-                f'<div class="nmt-ach-badge">{icon("users", size=12, color="var(--amber-600)")} {esc(ev["stat_badge"])}</div>'
-                if ev["stat_badge"] else ""
-            )
-            desc_html = f'<p class="nmt-ach-desc">{esc(ev["description"])}</p>' if ev["description"] else ""
-
-            video_id = extract_youtube_id(ev["youtube_url"]) if ev["youtube_url"] else None
-            if video_id:
-                embed_url = build_youtube_embed_url(video_id, autoplay=False, muted=False, loop=False, controls=True)
-                media_html = f'<iframe src="{embed_url}" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen loading="lazy"></iframe>'
-            else:
-                imgs = ev["image_urls"][:5]
-                if imgs:
-                    n = len(imgs)
-                    slot = 3.5
-                    total = n * slot
-                    imgs_html = "".join(
-                        f'<img src="{resolve_src(u, width=640)}" alt="{esc(ev["title"])}"'
-                        + (f' style="animation:nmt-ach-fade {total}s ease-in-out infinite;animation-delay:{i * slot}s;"' if n > 1 else ' style="opacity:1;"')
-                        + '>'
-                        for i, u in enumerate(imgs)
-                    )
-                    media_html = imgs_html
-                else:
-                    media_html = f'<div class="nmt-ach-placeholder">{icon("award", size=28, color="var(--ink-300)")}</div>'
-
-            cards_html += f"""
-            <div class="nmt-ach-card">
-              <div class="nmt-ach-media">{media_html}</div>
-              <div class="nmt-ach-body">
-                {badge_html}
-                <h3 class="nmt-ach-title">{esc(ev["title"])}</h3>
-                {date_html}
-                {desc_html}
-              </div>
-            </div>
-            """
-
         st.markdown(html_block(f"""
         <div class="nmt-shell nmt-section" style="text-align:center;">
           <div class="nmt-eyebrow">{icon("award", size=13, color="var(--brand-600)")} Community &amp; Events</div>
@@ -493,10 +451,54 @@ def render_home():
             A look at the workshops and events we've conducted, and the students who joined us.
           </p>
         </div>
-        <div class="nmt-shell nmt-ach-grid">
-          {cards_html}
-        </div>
         """), unsafe_allow_html=True)
+
+        st.markdown('<div class="nmt-shell">', unsafe_allow_html=True)
+        cols = st.columns(len(events), gap="medium")
+        for i, ev in enumerate(events):
+            with cols[i]:
+                cover_src = resolve_src(ev["cover_image"], width=480) if ev["cover_image"] else ""
+                media_html = (
+                    f'<img src="{esc(cover_src)}" alt="{esc(ev["title"])}" onerror="this.style.display=\'none\'">'
+                    if cover_src else f'<div class="nmt-event-placeholder">{icon("calendar", size=26, color="var(--ink-300)")}</div>'
+                )
+                cat_html = f'<div class="nmt-event-cat">{esc(ev["category"])}</div>' if ev["category"] else ""
+                date_html = (
+                    f'<div class="nmt-event-meta-row">{icon("calendar", size=12, color="var(--ink-400)")} {ev["event_date"].strftime("%b %d, %Y")}</div>'
+                    if ev["event_date"] else ""
+                )
+                loc_html = f'<div class="nmt-event-meta-row">{icon("map-pin", size=12, color="var(--ink-400)")} {esc(ev["location"])}</div>' if ev["location"] else ""
+                part_html = (
+                    f'<div class="nmt-event-meta-row">{icon("users", size=12, color="var(--ink-400)")} {ev["participants_count"]} Participants</div>'
+                    if ev["participants_count"] else ""
+                )
+                desc = ev["short_description"] or ""
+                desc_short = desc[:110].rsplit(" ", 1)[0].rstrip(",.;:") + "…" if len(desc) > 110 else desc
+                desc_html = f'<p class="nmt-event-desc">{esc(desc_short)}</p>' if desc_short else ""
+
+                st.markdown(html_block(f"""
+                <div class="nmt-card nmt-event-card" style="animation-delay:{i*0.06}s;">
+                  <div class="nmt-event-media">{media_html}</div>
+                  <div class="nmt-event-body">
+                    {cat_html}
+                    <div class="nmt-event-title">{esc(ev["title"])}</div>
+                    {date_html}{loc_html}{part_html}
+                    {desc_html}
+                  </div>
+                </div>
+                """), unsafe_allow_html=True)
+                if st.button("View Event Details", key=f"view_event_{ev['id']}", use_container_width=True, type="primary"):
+                    st.session_state.selected_event_id = ev["id"]
+                    st.session_state.page = "events"
+                    st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        _, btn_col, _ = st.columns([1, 1, 1])
+        with btn_col:
+            if st.button("View All Events", key="view_all_events", use_container_width=True):
+                st.session_state.selected_event_id = None
+                st.session_state.page = "events"
+                st.rerun()
 
     # ─── TESTIMONIALS ─────────────────────────────────────────────────────
     test_sec = home_sections.get("testimonials", _CMS_SECTION_DEFAULT)
