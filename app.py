@@ -77,6 +77,7 @@ from components.styles import inject_css
 from components.navbar import render_visible_navbar, render_footer, render_whatsapp_button
 from pages.home import render_home
 from pages.courses import render_courses
+from pages.events import render_events
 from pages.careers import render_careers
 from pages.about import render_about
 from pages.contact import render_contact
@@ -98,7 +99,7 @@ if "user" not in st.session_state:
 # ─── Handle URL query params ─────────────────────────────────────────────────
 params = st.query_params
 if "page" in params:
-    allowed_pages = {"home", "courses", "careers", "about", "contact", "login", "dashboard", "admin", "verify", "privacy", "terms"}
+    allowed_pages = {"home", "courses", "events", "careers", "about", "contact", "login", "dashboard", "admin", "verify", "privacy", "terms"}
     p = params.get("page")
     if p in allowed_pages:
         st.session_state.page = p
@@ -199,6 +200,8 @@ else:
                 render_home()
             elif current_page == "courses":
                 render_courses()
+            elif current_page == "events":
+                render_events()
             elif current_page == "careers":
                 render_careers()
             elif current_page == "about":
