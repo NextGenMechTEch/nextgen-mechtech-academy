@@ -457,36 +457,38 @@ def render_home():
         cols = st.columns(len(events), gap="medium")
         for i, ev in enumerate(events):
             with cols[i]:
-                cover_src = resolve_src(ev["cover_image"], width=480) if ev["cover_image"] else ""
-                media_html = (
-                    f'<img src="{esc(cover_src)}" alt="{esc(ev["title"])}" onerror="this.style.display=\'none\'">'
-                    if cover_src else f'<div class="nmt-event-placeholder">{icon("calendar", size=26, color="var(--ink-300)")}</div>'
+                cover_src = resolve_src(ev["cover_image"], width=400) if ev["cover_image"] else ""
+                thumb = (
+                    f'<img src="{esc(cover_src)}" style="width:100%;height:155px;object-fit:cover;border-radius:10px 10px 0 0;" alt="{esc(ev["title"])}" onerror="this.style.display=\'none\'">'
+                    if cover_src else
+                    f'<div style="width:100%;height:155px;border-radius:10px 10px 0 0;background:var(--surface-soft);display:flex;align-items:center;justify-content:center;">{icon("calendar", size=26, color="var(--ink-300)")}</div>'
                 )
-                cat_html = f'<div class="nmt-event-cat">{esc(ev["category"])}</div>' if ev["category"] else ""
-                date_html = (
-                    f'<div class="nmt-event-meta-row">{icon("calendar", size=12, color="var(--ink-400)")} {ev["event_date"].strftime("%b %d, %Y")}</div>'
-                    if ev["event_date"] else ""
+                cat_html = (
+                    f'<div style="font-size:11px;font-weight:700;color:var(--blue-600);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">{esc(ev["category"])}</div>'
+                    if ev["category"] else ""
                 )
-                loc_html = f'<div class="nmt-event-meta-row">{icon("map-pin", size=12, color="var(--ink-400)")} {esc(ev["location"])}</div>' if ev["location"] else ""
+                date_str = ev["event_date"].strftime("%b %d, %Y") if ev["event_date"] else ""
+                meta_bits = [b for b in [date_str, ev["location"]] if b]
+                meta_line = f'<div class="nmt-card-meta">{esc(" · ".join(meta_bits))}</div>' if meta_bits else ""
                 part_html = (
-                    f'<div class="nmt-event-meta-row">{icon("users", size=12, color="var(--ink-400)")} {ev["participants_count"]} Participants</div>'
+                    f'<span style="font-size:10.5px;background:var(--success-bg);color:var(--success-tx);'
+                    f'padding:2px 8px;border-radius:20px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">'
+                    f'{icon("users", size=10)} {ev["participants_count"]} Participants</span>'
                     if ev["participants_count"] else ""
                 )
                 desc = ev["short_description"] or ""
-                desc_short = desc[:110].rsplit(" ", 1)[0].rstrip(",.;:") + "…" if len(desc) > 110 else desc
-                desc_html = f'<p class="nmt-event-desc">{esc(desc_short)}</p>' if desc_short else ""
+                desc_short = desc[:100].rsplit(" ", 1)[0].rstrip(",.;:") + "…" if len(desc) > 100 else desc
+                desc_html = f'<div class="nmt-card-desc">{esc(desc_short)}</div>' if desc_short else ""
 
-                st.markdown(html_block(f"""
-                <div class="nmt-card nmt-event-card" style="animation-delay:{i*0.06}s;">
-                  <div class="nmt-event-media">{media_html}</div>
-                  <div class="nmt-event-body">
-                    {cat_html}
-                    <div class="nmt-event-title">{esc(ev["title"])}</div>
-                    {date_html}{loc_html}{part_html}
-                    {desc_html}
-                  </div>
-                </div>
-                """), unsafe_allow_html=True)
+                card_html = (
+                    f'<div class="nmt-card" style="animation-delay:{i*0.06}s;">{thumb}'
+                    f'<div style="padding:18px 18px 14px;">{cat_html}'
+                    f'<div class="nmt-card-title">{esc(ev["title"])}</div>'
+                    f'{meta_line}'
+                    f'{f"<div style=\'margin:2px 0 10px;\'>{part_html}</div>" if part_html else ""}'
+                    f'{desc_html}</div></div>'
+                )
+                st.markdown(card_html, unsafe_allow_html=True)
                 if st.button("View Event Details", key=f"view_event_{ev['id']}", use_container_width=True, type="primary"):
                     st.session_state.selected_event_id = ev["id"]
                     st.session_state.page = "events"
@@ -639,4 +641,3 @@ def render_home():
             </div>
             """), unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
-            
