@@ -171,6 +171,38 @@ div[data-testid="stAlert"] { border-radius: var(--radius-sm) !important; font-si
 .nmt-section-head.center { text-align: center; }
 .nmt-section-head.center .nmt-sub { margin: 0 auto; }
 
+/* ───────────────── Community & Events ───────────────── */
+.nmt-ach-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px; margin: 32px auto 24px; max-width: 1140px;
+}
+.nmt-ach-card {
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg, 16px);
+  overflow: hidden; box-shadow: 0 1px 2px rgba(16,24,40,0.04);
+}
+.nmt-ach-media {
+  position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--surface-soft, #F6F8FB);
+  overflow: hidden;
+}
+.nmt-ach-media iframe { width: 100%; height: 100%; border: 0; display: block; }
+.nmt-ach-media img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0;
+}
+.nmt-ach-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+@keyframes nmt-ach-fade {
+  0%, 100% { opacity: 0; }
+  8%, 92% { opacity: 1; }
+}
+.nmt-ach-body { padding: 18px 20px 22px; text-align: left; }
+.nmt-ach-badge {
+  display: inline-flex; align-items: center; gap: 5px; background: rgba(217,119,6,0.08);
+  color: var(--amber-600); font-size: 11px; font-weight: 700; padding: 4px 10px;
+  border-radius: 100px; margin-bottom: 10px;
+}
+.nmt-ach-title { font-family: var(--font-head); font-size: 16.5px; font-weight: 700; color: var(--ink-900); margin: 0 0 6px; }
+.nmt-ach-date { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-400); margin-bottom: 8px; }
+.nmt-ach-desc { font-size: 13.5px; color: var(--ink-500); line-height: 1.65; margin: 0; }
+
 /* ───────────────────── Navbar ───────────────────── */
 .nmt-navbar {
   position: sticky; top: 0; z-index: 999;
@@ -469,85 +501,35 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
 .nmt-admin-nav-inner { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
 
 /* ───────────────────── Footer ───────────────────── */
-.nmt-footer { background: var(--navy-950); color: #A9B6CE; padding: 48px 0 24px; }
+.nmt-footer { background: var(--navy-950); color: #A9B6CE; padding: 60px 0 28px; }
 .nmt-footer-inner { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
-.nmt-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 30px; }
-.nmt-footer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.nmt-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 36px; }
+.nmt-footer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .nmt-footer-brand-text { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: #fff; }
-.nmt-footer p.desc { font-size: 13px; line-height: 1.7; color: #8C9AB5; max-width: 260px; margin: 0 0 14px; }
-.nmt-footer h4 { font-family: var(--font-head); font-weight: 600; font-size: 12.5px; color: #fff; letter-spacing: 0.04em; margin: 0 0 12px; text-transform: uppercase; }
-.nmt-footer a.flink { display: block; font-size: 13.5px; color: #A9B6CE; text-decoration: none; margin-bottom: 8px; transition: color .15s; }
+.nmt-footer p.desc { font-size: 13px; line-height: 1.75; color: #8C9AB5; max-width: 260px; margin: 0 0 16px; }
+.nmt-footer h4 { font-family: var(--font-head); font-weight: 600; font-size: 12.5px; color: #fff; letter-spacing: 0.04em; margin: 0 0 14px; text-transform: uppercase; }
+.nmt-footer a.flink { display: block; font-size: 13.5px; color: #A9B6CE; text-decoration: none; margin-bottom: 9px; transition: color .15s; }
 .nmt-footer a.flink:hover { color: var(--amber-400); }
-.nmt-footer .contact-line { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: #A9B6CE; margin-bottom: 8px; }
-.nmt-footer-bottombar { padding: 0 0 22px; }
-.nmt-footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 18px; display: flex; justify-content: space-between;
+.nmt-footer .contact-line { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: #A9B6CE; margin-bottom: 9px; }
+.nmt-footer-bottombar { padding: 0 0 28px; }
+.nmt-footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 22px; display: flex; justify-content: space-between;
   align-items: center; font-size: 12.5px; color: #6B7A98; flex-wrap: wrap; gap: 8px; }
 
-/* Newsletter bar — a bordered strip integrated between the footer grid and
-   the copyright bar, same navy background as the rest of the footer so it
-   reads as one continuous block. Heading/text sit left, the subscribe form
-   sits right on desktop (Streamlit's own horizontal-block layout already
-   wraps these to a clean vertical stack on narrow/mobile widths). */
-.st-key-footer_newsletter {
-  background: var(--navy-950);
-  border-top: 1px solid rgba(255,255,255,0.09);
-  border-bottom: 1px solid rgba(255,255,255,0.09);
-  padding: 28px 24px;
-  margin: 4px 0 0;
-}
-.st-key-footer_newsletter > div { max-width: 1180px; margin: 0 auto; }
-.st-key-footer_newsletter div[data-testid="stHorizontalBlock"]:has(div[data-testid="stForm"]) {
-  align-items: center;
-}
-.st-key-footer_newsletter div[data-testid="stForm"] div[data-testid="stVerticalBlock"] {
-  justify-content: center;
-}
-.st-key-footer_newsletter .nmt-footer-nl-text {
-  padding-right: 12px;
-  display: flex; flex-direction: column; justify-content: center;
-  height: 100%;
-}
-.st-key-footer_newsletter .nmt-footer-nl-heading {
-  display: flex; align-items: center; gap: 8px;
-  font-family: var(--font-head); font-weight: 700; font-size: 15.5px;
-  color: #fff; margin-bottom: 4px;
-}
-.st-key-footer_newsletter .nmt-footer-nl-sub { font-size: 12.5px; color: #A9B6CE; margin: 0; line-height: 1.55; }
-.st-key-footer_newsletter div[data-testid="stForm"] {
-  border: none; padding: 0; background: transparent; margin: 0;
-  max-width: 340px; margin-left: auto;
-}
-.st-key-footer_newsletter div[data-testid="stForm"] div[data-testid="stHorizontalBlock"] {
-  gap: 8px !important; align-items: stretch;
-}
+/* Newsletter bar between the footer grid and the copyright bar — same navy
+   background so it reads as one continuous footer block. */
+.st-key-footer_newsletter { background: var(--navy-950); padding: 4px 24px 32px; margin-top: -1rem; }
+.st-key-footer_newsletter .nmt-footer-nl-inner { max-width: 1180px; margin: 0 auto; text-align: center; padding-bottom: 18px; }
+.st-key-footer_newsletter .nmt-footer-nl-heading { font-family: var(--font-head); font-weight: 700; font-size: 15px; color: #fff; margin-bottom: 4px; }
+.st-key-footer_newsletter .nmt-footer-nl-sub { font-size: 12.5px; color: #8C9AB5; margin: 0; }
+.st-key-footer_newsletter div[data-testid="stForm"] { border: none; padding: 0; background: transparent; max-width: 480px; margin: 0 auto; }
 .st-key-footer_newsletter div[data-testid="stTextInput"] input {
-  background: #FFFFFF;
-  border: 1.5px solid rgba(255,255,255,0.16);
-  color: var(--ink-900);
-  padding: 9px 14px; font-size: 13px;
-  border-radius: var(--radius-sm);
-  box-shadow: none;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+  color: #fff; border-radius: var(--radius-sm);
 }
-.st-key-footer_newsletter div[data-testid="stTextInput"] input::placeholder { color: var(--ink-500); }
-.st-key-footer_newsletter div[data-testid="stTextInput"] input:focus {
-  border-color: var(--amber-500);
-  box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
-  outline: none;
-}
+.st-key-footer_newsletter div[data-testid="stTextInput"] input::placeholder { color: #6B7A98; }
 .st-key-footer_newsletter button[kind="secondaryFormSubmit"],
 .st-key-footer_newsletter button[kind="formSubmit"] {
-  background: var(--amber-500) !important;
-  color: var(--navy-950) !important; border: none !important; border-radius: var(--radius-sm) !important;
-  font-weight: 700 !important; font-size: 13px; padding: 9px 16px; white-space: nowrap;
-  box-shadow: none !important;
-  transition: background .15s ease;
-}
-.st-key-footer_newsletter button[kind="secondaryFormSubmit"]:hover,
-.st-key-footer_newsletter button[kind="formSubmit"]:hover {
-  background: var(--amber-600) !important;
-  color: var(--navy-950) !important;
-  box-shadow: none !important;
+  background: var(--blue-600); color: #fff; border: none;
 }
 
 /* ───────────────────── Animations ───────────────────── */
@@ -986,9 +968,6 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
   .nmt-footer-grid { grid-template-columns: 1fr; gap: 32px; }
   .nmt-footer p.desc { max-width: 100%; }
   .nmt-footer-bottom { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .st-key-footer_newsletter { padding: 20px 20px; }
-  .st-key-footer_newsletter .nmt-footer-nl-text { padding-right: 0; margin-bottom: 14px; text-align: left; }
-  .st-key-footer_newsletter div[data-testid="stForm"] { max-width: 100%; margin-left: 0; }
 }
 
 /* ───────────────────── Mobile responsiveness pass ─────────────────────
@@ -1036,41 +1015,6 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
 
 @media (max-width: 380px) {
   .nmt-mini-stats-grid { grid-template-columns: 1fr !important; }
-}
-
-/* ───────────────────── Floating WhatsApp Support Button ───────────────────── */
-.nmt-wa-fab {
-  position: fixed;
-  right: 22px;
-  bottom: 22px;
-  z-index: 999;
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  background: #25D366;
-  color: #fff;
-  text-decoration: none;
-  padding: 12px 18px 12px 14px;
-  border-radius: 999px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.22);
-  transition: background .15s ease, box-shadow .15s ease;
-}
-.nmt-wa-fab:hover { background: #1EBE5A; box-shadow: 0 6px 18px rgba(0,0,0,0.26); }
-.nmt-wa-fab-label {
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 13.5px;
-  color: #fff;
-  white-space: nowrap;
-}
-@media (max-width: 640px) {
-  .nmt-wa-fab {
-    right: 16px;
-    bottom: 16px;
-    padding: 13px;
-    border-radius: 50%;
-  }
-  .nmt-wa-fab-label { display: none; }
 }
 </style>
 """
