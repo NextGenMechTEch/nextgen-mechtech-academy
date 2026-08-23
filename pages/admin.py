@@ -14,7 +14,7 @@ from database.models import (
     User, Course, Registration, Certificate, TutorApplication,
     ContactMessage, WebsiteSettings, Announcement, Instructor,
     EmailTemplate, RecruitmentDrive, JobOpening, NavItem,
-    NewsletterSubscriber,
+    NewsletterSubscriber, Event,
     UserRole, RegistrationStatus, PaymentStatus
 )
 from sqlalchemy.orm import joinedload
@@ -28,11 +28,11 @@ from utils.email_service import (
 from utils.helpers import (
     update_setting, get_all_settings, html_block,
     get_all_payment_methods, update_payment_method, add_payment_method,
-    delete_payment_method, flash_message,
+    delete_payment_method, flash_message, extract_youtube_id,
 )
 from utils.cloudinary_service import upload_file, resolve_src, get_file_bytes, is_url
 from pages.cms_admin import render_website_cms
-from pages.home import _get_featured_courses, _get_active_announcements
+from pages.home import _get_featured_courses, _get_active_announcements, _get_home_events
 import bcrypt
 
 
@@ -57,7 +57,7 @@ _MENU_ITEMS = [
     ("users", "Instructors"), ("users", "Students"), ("file-text", "Registrations"),
     ("award", "Certificates"), ("briefcase", "Tutor Apps"), ("mail", "Messages"),
     ("dollar-sign", "Payment Methods"),
-    ("bell", "Announcements"), ("mail", "Email Templates"),
+    ("bell", "Announcements"), ("calendar", "Events"), ("mail", "Email Templates"),
     ("mail", "Newsletter"),
     ("shield", "Roles & Perms"), ("settings", "Settings"),
 ]
@@ -69,12 +69,12 @@ _ROLE_ALLOWED_MODULES = {
     "admin": {
         "Dashboard", "Website CMS", "Courses", "Instructors", "Students",
         "Registrations", "Certificates", "Tutor Apps", "Messages",
-        "Payment Methods", "Announcements", "Email Templates", "Newsletter", "Settings",
+        "Payment Methods", "Announcements", "Events", "Email Templates", "Newsletter", "Settings",
     },
     "instructor": {"Dashboard"},
     "content_manager": {
         "Dashboard", "Website CMS", "Courses", "Instructors",
-        "Messages", "Announcements", "Email Templates", "Newsletter",
+        "Messages", "Announcements", "Events", "Email Templates", "Newsletter",
     },
 }
 
@@ -157,6 +157,7 @@ def render_admin():
         "Messages": _admin_messages,
         "Payment Methods": _admin_payment_methods,
         "Announcements": _admin_announcements,
+        "Events": _admin_events,
         "Email Templates": _admin_email_templates,
         "Newsletter": _admin_newsletter,
         "Roles & Perms": _admin_roles_permissions,
@@ -1645,6 +1646,237 @@ def _admin_announcements():
                         st.rerun()
                     finally:
                         db.close()
+
+
+# ─── Events (Community & Events) ──────────────────────────────────────────────
+_EVENT_CATEGORY_CHOICES = [
+    "Workshop", "Seminar", "Hackathon", "Competition",
+    "Open House", "Guest Lecture", "Industrial Visit", "Other",
+]
+
+
+def _upload_gallery_files(files, folder="nextgen_mechtech/events"):
+    """Upload each file individually so one bad file doesn't abort the rest.
+    Returns (urls, failed_count).
+    """
+    urls, failed = [], 0
+    for f in files or []:
+        try:
+            urls.append(upload_file(f, folder=folder))
+        except Exception:
+            failed += 1
+    return urls, failed
+
+
+def _admin_events():
+    st.markdown(f'<h3 style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--ink-900);margin-bottom:16px;">{icon("calendar", size=17)} Manage Community &amp; Events</h3>', unsafe_allow_html=True)
+
+    tab_list, tab_add = st.tabs(["All Events", "Add Event"])
+
+    with tab_add:
+        with st.form("add_event_form", clear_on_submit=True):
+            col1, col2 = st.columns(2)
+            with col1:
+                title = st.text_input("Event Title *", placeholder="AI & Robotics Workshop")
+                category = st.selectbox("Category", _EVENT_CATEGORY_CHOICES)
+                event_date = st.date_input("Event Date", value=None)
+                event_time = st.text_input("Event Time", placeholder="e.g. 10:00 AM – 1:00 PM")
+            with col2:
+                location = st.text_input("Location", placeholder="e.g. NextGen MechTech Campus, Lahore")
+                participants_count = st.number_input("Number of Participants", min_value=0, value=0, step=1)
+                host_name = st.text_input("Host / Instructor", placeholder="e.g. Engr. Ahmed Raza")
+                display_order = st.number_input("Display Order", min_value=0, value=0)
+
+            short_description = st.text_area("Short Description *", height=80, placeholder="One or two lines shown on the event card.")
+            full_description = st.text_area("Detailed Description", height=140, placeholder="Full write-up shown on the event detail page.")
+
+            col3, col4 = st.columns(2)
+            with col3:
+                is_featured = st.checkbox("Featured (shown first on homepage)", value=False)
+            with col4:
+                is_published = st.checkbox("Published (visible on website)", value=True)
+
+            youtube_url = st.text_input("YouTube Video URL (optional)", placeholder="https://youtube.com/watch?v=...")
+            cover_image = st.file_uploader("Cover Image", type=["jpg", "jpeg", "png", "webp"])
+            gallery_files = st.file_uploader("Gallery Images (optional, multiple)", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True)
+
+            if st.form_submit_button("Add Event", type="primary"):
+                if not title or not short_description:
+                    st.error("Title and short description are required.")
+                elif youtube_url and not extract_youtube_id(youtube_url):
+                    st.error("That YouTube URL doesn't look valid. Leave it blank or check the link.")
+                else:
+                    cover_url = None
+                    if cover_image:
+                        try:
+                            cover_url = upload_file(cover_image, folder="nextgen_mechtech/events")
+                        except Exception as e:
+                            st.error(f"Cover image upload failed: {e}")
+                            st.stop()
+                    gallery_urls, gallery_failed = _upload_gallery_files(gallery_files)
+
+                    db = get_db_session()
+                    try:
+                        db.add(Event(
+                            title=title, category=category,
+                            event_date=datetime.combine(event_date, datetime.min.time()) if event_date else None,
+                            event_time=event_time or None, location=location or None,
+                            participants_count=int(participants_count) or None,
+                            host_name=host_name or None,
+                            short_description=short_description, full_description=full_description or None,
+                            cover_image=cover_url, gallery_images=gallery_urls or None,
+                            youtube_url=youtube_url or None,
+                            is_featured=is_featured, is_published=is_published,
+                            display_order=int(display_order),
+                        ))
+                        db.commit()
+                        _get_home_events.clear()
+                        msg = f"Event '{title}' added successfully."
+                        if gallery_failed:
+                            msg += f" ({gallery_failed} gallery image(s) failed to upload.)"
+                        flash_message(msg)
+                        st.rerun()
+                    except Exception as e:
+                        db.rollback()
+                        st.error(str(e))
+                    finally:
+                        db.close()
+
+    with tab_list:
+        db = get_db_session()
+        try:
+            events = db.query(Event).order_by(Event.display_order, Event.created_at.desc()).all()
+        finally:
+            db.close()
+
+        if not events:
+            st.info("No events found. Add one using the 'Add Event' tab.")
+            return
+
+        for ev in events:
+            badges = []
+            badges.append('<span class="nmt-badge nmt-badge-approved">Published</span>' if ev.is_published else '<span class="nmt-badge nmt-badge-neutral">Draft</span>')
+            if ev.is_featured:
+                badges.append('<span class="nmt-badge nmt-badge-pending">Featured</span>')
+            with st.expander(f"{ev.title} — {ev.category or 'Uncategorized'}"):
+                st.markdown(" ".join(badges), unsafe_allow_html=True)
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    with st.form(f"edit_event_{ev.id}"):
+                        e_title = st.text_input("Title", value=ev.title)
+                        e_category = st.selectbox(
+                            "Category", _EVENT_CATEGORY_CHOICES,
+                            index=_EVENT_CATEGORY_CHOICES.index(ev.category) if ev.category in _EVENT_CATEGORY_CHOICES else len(_EVENT_CATEGORY_CHOICES) - 1,
+                        )
+                        e_date = st.date_input("Event Date", value=ev.event_date.date() if ev.event_date else None)
+                        e_time = st.text_input("Event Time", value=ev.event_time or "")
+                        e_location = st.text_input("Location", value=ev.location or "")
+                        e_participants = st.number_input("Number of Participants", min_value=0, value=ev.participants_count or 0, step=1)
+                        e_host = st.text_input("Host / Instructor", value=ev.host_name or "")
+                        e_order = st.number_input("Display Order", min_value=0, value=ev.display_order or 0)
+                        e_short = st.text_area("Short Description", value=ev.short_description or "", height=80)
+                        e_full = st.text_area("Detailed Description", value=ev.full_description or "", height=140)
+                        e_featured = st.checkbox("Featured", value=ev.is_featured)
+                        e_published = st.checkbox("Published", value=ev.is_published)
+                        e_youtube = st.text_input("YouTube Video URL", value=ev.youtube_url or "")
+                        e_cover = st.file_uploader("Replace Cover Image", type=["jpg", "jpeg", "png", "webp"], key=f"cover_{ev.id}")
+
+                        existing_gallery = ev.gallery_images or []
+                        if existing_gallery:
+                            st.caption(f"Current gallery images ({len(existing_gallery)}) — untick to remove:")
+                            g_cols = st.columns(min(4, len(existing_gallery)))
+                            keep_flags = []
+                            for gi, url in enumerate(existing_gallery):
+                                with g_cols[gi % len(g_cols)]:
+                                    st.image(resolve_src(url, width=150), use_container_width=True)
+                                    keep_flags.append(st.checkbox("Keep", value=True, key=f"keep_{ev.id}_{gi}"))
+                        else:
+                            keep_flags = []
+                        e_new_gallery = st.file_uploader("Add Gallery Images", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=True, key=f"newgal_{ev.id}")
+
+                        if st.form_submit_button("Save Changes", type="primary"):
+                            if e_youtube and not extract_youtube_id(e_youtube):
+                                st.error("That YouTube URL doesn't look valid.")
+                                st.stop()
+                            e_cover_url = None
+                            if e_cover:
+                                try:
+                                    e_cover_url = upload_file(e_cover, folder="nextgen_mechtech/events")
+                                except Exception as e:
+                                    st.error(f"Cover image upload failed: {e}")
+                                    st.stop()
+                            new_gallery_urls, gallery_failed = _upload_gallery_files(e_new_gallery)
+                            final_gallery = [u for u, keep in zip(existing_gallery, keep_flags) if keep] + new_gallery_urls
+
+                            db = get_db_session()
+                            try:
+                                e = db.query(Event).filter(Event.id == ev.id).first()
+                                e.title = e_title
+                                e.category = e_category
+                                e.event_date = datetime.combine(e_date, datetime.min.time()) if e_date else None
+                                e.event_time = e_time or None
+                                e.location = e_location or None
+                                e.participants_count = int(e_participants) or None
+                                e.host_name = e_host or None
+                                e.display_order = int(e_order)
+                                e.short_description = e_short
+                                e.full_description = e_full or None
+                                e.is_featured = e_featured
+                                e.is_published = e_published
+                                e.youtube_url = e_youtube or None
+                                e.gallery_images = final_gallery or None
+                                if e_cover_url:
+                                    e.cover_image = e_cover_url
+                                db.commit()
+                                _get_home_events.clear()
+                                msg = "Saved."
+                                if gallery_failed:
+                                    msg += f" ({gallery_failed} new gallery image(s) failed to upload.)"
+                                flash_message(msg)
+                                st.rerun()
+                            except Exception as ex:
+                                db.rollback()
+                                st.error(str(ex))
+                            finally:
+                                db.close()
+                with col2:
+                    if ev.cover_image:
+                        st.markdown(f'<img src="{resolve_src(ev.cover_image, width=200)}" style="width:100%;border-radius:8px;object-fit:cover;">', unsafe_allow_html=True)
+
+                    toggle_label = "Unpublish" if ev.is_published else "Publish"
+                    if st.button(toggle_label, key=f"toggle_pub_event_{ev.id}", use_container_width=True):
+                        db = get_db_session()
+                        try:
+                            e = db.query(Event).filter(Event.id == ev.id).first()
+                            e.is_published = not e.is_published
+                            db.commit()
+                            _get_home_events.clear()
+                            st.rerun()
+                        finally:
+                            db.close()
+
+                    feat_label = "Unfeature" if ev.is_featured else "Feature"
+                    if st.button(feat_label, key=f"toggle_feat_event_{ev.id}", use_container_width=True):
+                        db = get_db_session()
+                        try:
+                            e = db.query(Event).filter(Event.id == ev.id).first()
+                            e.is_featured = not e.is_featured
+                            db.commit()
+                            _get_home_events.clear()
+                            st.rerun()
+                        finally:
+                            db.close()
+
+                    if st.button("Delete", key=f"del_event_{ev.id}", use_container_width=True):
+                        db = get_db_session()
+                        try:
+                            e = db.query(Event).filter(Event.id == ev.id).first()
+                            db.delete(e)
+                            db.commit()
+                            _get_home_events.clear()
+                            st.rerun()
+                        finally:
+                            db.close()
 
 
 # ─── Email Templates ──────────────────────────────────────────────────────────
