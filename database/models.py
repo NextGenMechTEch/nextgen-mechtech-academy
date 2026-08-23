@@ -227,6 +227,21 @@ class NewsletterSubscriber(Base):
     subscribed_at = Column(DateTime, default=datetime.utcnow)
 
 
+class Achievement(Base):
+    __tablename__ = "achievements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    event_date = Column(DateTime, nullable=True)
+    stat_badge = Column(String(100), nullable=True)
+    youtube_url = Column(String(500), nullable=True)
+    image_urls = Column(JSON, default=list)
+    is_active = Column(Boolean, default=True)
+    display_order = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class WebsiteSettings(Base):
     __tablename__ = "website_settings"
 
