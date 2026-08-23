@@ -78,14 +78,30 @@ def _render_events_grid():
                 thumb = (
                     f'<img src="{esc(cover_src)}" style="width:100%;height:155px;object-fit:cover;border-radius:10px 10px 0 0;" alt="{esc(ev.title)}" onerror="this.style.display=\'none\'">'
                     if cover_src else
-                    f'<div class="nmt-event-placeholder" style="height:155px;border-radius:10px 10px 0 0;">{icon("calendar", size=26, color="var(--ink-300)")}</div>'
+                    f'<div style="width:100%;height:155px;border-radius:10px 10px 0 0;background:var(--surface-soft);display:flex;align-items:center;justify-content:center;">{icon("calendar", size=26, color="var(--ink-300)")}</div>'
                 )
                 featured_badge = f'<div class="nmt-badge-featured">{icon("star", size=11)} Featured</div>' if ev.is_featured else ""
                 date_str = ev.event_date.strftime("%b %d, %Y") if ev.event_date else ""
+                meta_bits = [b for b in [date_str, ev.location] if b]
+                meta_line = f'<div class="nmt-card-meta">{esc(" · ".join(meta_bits))}</div>' if meta_bits else ""
+                part_html = (
+                    f'<span style="font-size:10.5px;background:var(--success-bg);color:var(--success-tx);'
+                    f'padding:2px 8px;border-radius:20px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">'
+                    f'{icon("users", size=10)} {ev.participants_count} Participants</span>'
+                    if ev.participants_count else ""
+                )
                 desc = ev.short_description or ""
                 desc_short = desc[:90].rsplit(" ", 1)[0].rstrip(",.;:") + "…" if len(desc) > 90 else desc
 
-                card_html = f"""<div class="nmt-card" style="animation-delay:{i*0.06}s;">{thumb}<div style="padding:18px 18px 14px;">{featured_badge}<div style="font-size:11px;font-weight:700;color:var(--blue-600);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">{esc(ev.category or "")}</div><div class="nmt-card-title">{esc(ev.title)}</div><div class="nmt-card-meta">{esc(date_str)}{" · " + esc(ev.location) if ev.location else ""}</div><div class="nmt-card-desc">{esc(desc_short)}</div></div></div>"""
+                card_html = (
+                    f'<div class="nmt-card" style="animation-delay:{i*0.06}s;">{thumb}'
+                    f'<div style="padding:18px 18px 14px;">{featured_badge}'
+                    f'<div style="font-size:11px;font-weight:700;color:var(--blue-600);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">{esc(ev.category or "")}</div>'
+                    f'<div class="nmt-card-title">{esc(ev.title)}</div>'
+                    f'{meta_line}'
+                    f'{f"<div style=\'margin:2px 0 10px;\'>{part_html}</div>" if part_html else ""}'
+                    f'<div class="nmt-card-desc">{esc(desc_short)}</div></div></div>'
+                )
                 st.markdown(card_html, unsafe_allow_html=True)
                 if st.button("View Event Details", key=f"view_ev_{ev.id}", use_container_width=True, type="primary"):
                     st.session_state.selected_event_id = ev.id
