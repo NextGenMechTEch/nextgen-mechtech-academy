@@ -1041,7 +1041,7 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
 /* ───────────────────── Floating WhatsApp Support Button ───────────────────── */
 .nmt-wa-fab {
   position: fixed;
-  right: 22px;
+  left: 22px;
   bottom: 22px;
   z-index: 999;
   display: inline-flex;
@@ -1065,13 +1065,67 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
 }
 @media (max-width: 640px) {
   .nmt-wa-fab {
-    right: 16px;
+    left: 16px;
     bottom: 16px;
     padding: 13px;
     border-radius: 50%;
   }
   .nmt-wa-fab-label { display: none; }
 }
+
+/* ───────────────────── Community & Events ───────────────────── */
+.nmt-event-card { display: flex; flex-direction: column; height: 100%; }
+.nmt-event-media {
+  width: 100%; height: 170px; border-radius: 14px 14px 0 0; overflow: hidden;
+  background: var(--surface-soft); position: relative;
+}
+.nmt-event-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nmt-event-placeholder {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  background: var(--surface-soft);
+}
+.nmt-event-body { padding: 18px 20px 20px; flex: 1; display: flex; flex-direction: column; }
+.nmt-event-cat {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--blue-600); margin-bottom: 8px;
+}
+.nmt-event-title {
+  font-family: var(--font-head); font-size: 15.5px; font-weight: 700; color: var(--ink-900);
+  line-height: 1.35; margin-bottom: 8px;
+}
+.nmt-event-meta-row {
+  display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-500); margin-bottom: 5px;
+}
+.nmt-event-desc { font-size: 12.5px; color: var(--ink-500); line-height: 1.6; margin: 8px 0 0; }
+
+/* CSS-only lightbox gallery on the event detail page — no JS anywhere else
+   in this app, so this uses the :target selector instead of a script. */
+.nmt-lightbox-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
+}
+.nmt-lightbox-thumb { display: block; border-radius: 10px; overflow: hidden; line-height: 0; }
+.nmt-lightbox-thumb img {
+  width: 100%; height: 120px; object-fit: cover; display: block;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.nmt-lightbox-thumb:hover img { transform: scale(1.04); opacity: 0.92; }
+.nmt-lightbox-overlay {
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(10,10,20,0.92);
+  align-items: center; justify-content: center; padding: 32px;
+}
+.nmt-lightbox-overlay:target { display: flex; }
+.nmt-lightbox-overlay img {
+  max-width: 92%; max-height: 88vh; border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+.nmt-lightbox-close {
+  position: absolute; top: 20px; right: 28px; width: 40px; height: 40px;
+  border-radius: 50%; background: rgba(255,255,255,0.12);
+  color: #fff; text-decoration: none; font-size: 24px; line-height: 40px;
+  text-align: center; transition: background 0.15s ease;
+}
+.nmt-lightbox-close:hover { background: rgba(255,255,255,0.22); }
 </style>
 """
 
