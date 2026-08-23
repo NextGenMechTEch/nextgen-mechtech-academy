@@ -518,10 +518,10 @@ a.nmt-hero-video-watch:hover { background: #e00000 !important; transform: transl
 /* Newsletter bar between the footer grid and the copyright bar — same navy
    background so it reads as one continuous footer block. */
 .st-key-footer_newsletter { background: var(--navy-950); padding: 4px 24px 32px; margin-top: -1rem; }
-.st-key-footer_newsletter .nmt-footer-nl-inner { max-width: 1180px; margin: 0 auto; text-align: center; padding-bottom: 18px; }
+.st-key-footer_newsletter .nmt-footer-nl-inner { width: 100%; max-width: 1180px; margin: 0 auto; text-align: center; padding-bottom: 18px; }
 .st-key-footer_newsletter .nmt-footer-nl-heading { font-family: var(--font-head); font-weight: 700; font-size: 15px; color: #fff; margin-bottom: 4px; }
 .st-key-footer_newsletter .nmt-footer-nl-sub { font-size: 12.5px; color: #8C9AB5; margin: 0; }
-.st-key-footer_newsletter div[data-testid="stForm"] { border: none; padding: 0; background: transparent; max-width: 480px; margin: 0 auto; }
+.st-key-footer_newsletter div[data-testid="stForm"] { border: none; padding: 0; background: transparent; width: 100%; max-width: 480px; margin: 0 auto; }
 .st-key-footer_newsletter div[data-testid="stTextInput"] input {
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
   color: #fff; border-radius: var(--radius-sm);
