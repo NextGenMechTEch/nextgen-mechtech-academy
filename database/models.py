@@ -246,17 +246,24 @@ class Announcement(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
-class Achievement(Base):
-    __tablename__ = "achievements"
+class Event(Base):
+    __tablename__ = "events"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(300), nullable=False)
-    description = Column(Text, nullable=True)
+    category = Column(String(120), nullable=True)
     event_date = Column(DateTime, nullable=True)
-    stat_badge = Column(String(100), nullable=True)
+    event_time = Column(String(100), nullable=True)
+    location = Column(String(300), nullable=True)
+    participants_count = Column(Integer, nullable=True)
+    host_name = Column(String(200), nullable=True)
+    short_description = Column(Text, nullable=True)
+    full_description = Column(Text, nullable=True)
+    cover_image = Column(String(500), nullable=True)
+    gallery_images = Column(JSON, nullable=True)
     youtube_url = Column(String(500), nullable=True)
-    image_urls = Column(JSON, nullable=True)
-    is_active = Column(Boolean, default=True)
+    is_featured = Column(Boolean, default=False)
+    is_published = Column(Boolean, default=True)
     display_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
