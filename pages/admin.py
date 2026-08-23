@@ -14,7 +14,7 @@ from database.models import (
     User, Course, Registration, Certificate, TutorApplication,
     ContactMessage, WebsiteSettings, Announcement, Instructor,
     EmailTemplate, RecruitmentDrive, JobOpening, NavItem,
-    NewsletterSubscriber, Achievement,
+    NewsletterSubscriber,
     UserRole, RegistrationStatus, PaymentStatus
 )
 from sqlalchemy.orm import joinedload
@@ -22,12 +22,13 @@ from utils.email_service import (
     send_registration_approved, send_registration_rejected,
     send_tutor_application_approved, send_tutor_application_rejected,
     send_certificate_issued,
+    send_announcement_email,
     send_email, _base_template, ADMIN_EMAIL
 )
 from utils.helpers import (
     update_setting, get_all_settings, html_block,
     get_all_payment_methods, update_payment_method, add_payment_method,
-    delete_payment_method, flash_message, extract_youtube_id,
+    delete_payment_method, flash_message,
 )
 from utils.cloudinary_service import upload_file, resolve_src, get_file_bytes, is_url
 from pages.cms_admin import render_website_cms
@@ -57,7 +58,7 @@ _MENU_ITEMS = [
     ("award", "Certificates"), ("briefcase", "Tutor Apps"), ("mail", "Messages"),
     ("dollar-sign", "Payment Methods"),
     ("bell", "Announcements"), ("mail", "Email Templates"),
-    ("mail", "Newsletter"), ("award", "Community & Events"),
+    ("mail", "Newsletter"),
     ("shield", "Roles & Perms"), ("settings", "Settings"),
 ]
 
@@ -68,14 +69,12 @@ _ROLE_ALLOWED_MODULES = {
     "admin": {
         "Dashboard", "Website CMS", "Courses", "Instructors", "Students",
         "Registrations", "Certificates", "Tutor Apps", "Messages",
-        "Payment Methods", "Announcements", "Email Templates", "Newsletter",
-        "Community & Events", "Settings",
+        "Payment Methods", "Announcements", "Email Templates", "Newsletter", "Settings",
     },
     "instructor": {"Dashboard"},
     "content_manager": {
         "Dashboard", "Website CMS", "Courses", "Instructors",
         "Messages", "Announcements", "Email Templates", "Newsletter",
-        "Community & Events",
     },
 }
 
@@ -160,7 +159,6 @@ def render_admin():
         "Announcements": _admin_announcements,
         "Email Templates": _admin_email_templates,
         "Newsletter": _admin_newsletter,
-        "Community & Events": _admin_community_events,
         "Roles & Perms": _admin_roles_permissions,
         "Settings": _admin_settings,
     }
@@ -1474,154 +1472,6 @@ def _del_msg(mid):
         db.close()
 
 
-# ─── Community & Events ────────────────────────────────────────────────────────
-def _admin_community_events():
-    st.markdown(f'<h3 style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--ink-900);margin-bottom:16px;">{icon("award", size=17)} Community &amp; Events</h3>', unsafe_allow_html=True)
-
-    tab_list, tab_add = st.tabs(["All Events", "Add Event"])
-
-    with tab_add:
-        with st.form("add_achievement_form"):
-            col1, col2 = st.columns(2)
-            with col1:
-                a_title = st.text_input("Title *", placeholder="SOLIDWORKS Bootcamp — Summer 2026")
-                a_date = st.date_input("Event Date", value=None)
-                a_badge = st.text_input("Stat Badge", placeholder="45+ Participants")
-            with col2:
-                a_youtube = st.text_input("YouTube Video URL (optional, landscape)", placeholder="https://youtube.com/watch?v=...")
-                a_order = st.number_input("Display Order", min_value=0, value=0)
-                a_active = st.checkbox("Active (visible on website)", value=True)
-
-            a_desc = st.text_area("Description", placeholder="Short description of what was conducted...", height=90)
-            a_images = st.file_uploader(
-                "Photos (used as an auto-sliding gallery if no video is set)",
-                type=["jpg", "jpeg", "png"], accept_multiple_files=True
-            )
-
-            if st.form_submit_button("Add Event", type="primary"):
-                if not a_title:
-                    st.error("Title is required.")
-                else:
-                    yt_clean = a_youtube.strip() if a_youtube else ""
-                    if yt_clean and not extract_youtube_id(yt_clean):
-                        st.error("That doesn't look like a valid YouTube URL.")
-                    else:
-                        image_urls = []
-                        try:
-                            for img in (a_images or []):
-                                image_urls.append(upload_file(img, folder="nextgen_mechtech/achievements"))
-                        except Exception as e:
-                            st.error(f"Image upload failed: {e}")
-                            return
-                        db = get_db_session()
-                        try:
-                            db.add(Achievement(
-                                title=a_title, description=a_desc,
-                                event_date=datetime.combine(a_date, datetime.min.time()) if a_date else None,
-                                stat_badge=a_badge, youtube_url=yt_clean or None,
-                                image_urls=image_urls, is_active=a_active,
-                                display_order=int(a_order),
-                            ))
-                            db.commit()
-                            flash_message("Event added.")
-                            st.rerun()
-                        except Exception as e:
-                            db.rollback()
-                            st.error(str(e))
-                        finally:
-                            db.close()
-
-    with tab_list:
-        db = get_db_session()
-        try:
-            events = db.query(Achievement).order_by(Achievement.display_order, Achievement.created_at.desc()).all()
-        finally:
-            db.close()
-
-        if not events:
-            st.info("No events yet — add one from the 'Add Event' tab.")
-            return
-
-        for ev in events:
-            badge = '<span class="nmt-badge nmt-badge-approved">Active</span>' if ev.is_active else '<span class="nmt-badge nmt-badge-neutral">Hidden</span>'
-            with st.expander(ev.title):
-                st.markdown(badge, unsafe_allow_html=True)
-                imgs = ev.image_urls or []
-                st.write(f"{len(imgs)} photo(s)" + (" · has video" if ev.youtube_url else ""))
-
-                with st.form(f"edit_achievement_{ev.id}"):
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        e_title = st.text_input("Title *", value=ev.title, key=f"ea_title_{ev.id}")
-                        e_date = st.date_input("Event Date", value=ev.event_date.date() if ev.event_date else None, key=f"ea_date_{ev.id}")
-                        e_badge = st.text_input("Stat Badge", value=ev.stat_badge or "", key=f"ea_badge_{ev.id}")
-                    with col2:
-                        e_youtube = st.text_input("YouTube Video URL", value=ev.youtube_url or "", key=f"ea_yt_{ev.id}")
-                        e_order = st.number_input("Display Order", min_value=0, value=ev.display_order or 0, key=f"ea_order_{ev.id}")
-                        e_active = st.checkbox("Active (visible on website)", value=ev.is_active, key=f"ea_active_{ev.id}")
-
-                    e_desc = st.text_area("Description", value=ev.description or "", height=90, key=f"ea_desc_{ev.id}")
-                    e_new_images = st.file_uploader(
-                        "Add more photos (appended to existing gallery)",
-                        type=["jpg", "jpeg", "png"], accept_multiple_files=True, key=f"ea_imgs_{ev.id}"
-                    )
-                    e_clear_images = st.checkbox("Remove all existing photos", key=f"ea_clear_{ev.id}")
-
-                    col_save, col_del = st.columns(2)
-                    with col_save:
-                        save_clicked = st.form_submit_button("Save Changes", type="primary")
-                    with col_del:
-                        delete_clicked = st.form_submit_button("Delete Event")
-
-                if save_clicked:
-                    yt_clean = e_youtube.strip() if e_youtube else ""
-                    if yt_clean and not extract_youtube_id(yt_clean):
-                        st.error("That doesn't look like a valid YouTube URL.")
-                    else:
-                        new_urls = []
-                        try:
-                            for img in (e_new_images or []):
-                                new_urls.append(upload_file(img, folder="nextgen_mechtech/achievements"))
-                        except Exception as e:
-                            st.error(f"Image upload failed: {e}")
-                            new_urls = None
-                        if new_urls is not None:
-                            db = get_db_session()
-                            try:
-                                row = db.query(Achievement).filter(Achievement.id == ev.id).first()
-                                row.title = e_title
-                                row.description = e_desc
-                                row.event_date = datetime.combine(e_date, datetime.min.time()) if e_date else None
-                                row.stat_badge = e_badge
-                                row.youtube_url = yt_clean or None
-                                row.display_order = int(e_order)
-                                row.is_active = e_active
-                                base_imgs = [] if e_clear_images else list(row.image_urls or [])
-                                row.image_urls = base_imgs + new_urls
-                                db.commit()
-                                flash_message("Event updated.")
-                                st.rerun()
-                            except Exception as e:
-                                db.rollback()
-                                st.error(str(e))
-                            finally:
-                                db.close()
-
-                if delete_clicked:
-                    db = get_db_session()
-                    try:
-                        row = db.query(Achievement).filter(Achievement.id == ev.id).first()
-                        db.delete(row)
-                        db.commit()
-                        flash_message("Event deleted.", kind="warning")
-                        st.rerun()
-                    except Exception as e:
-                        db.rollback()
-                        st.error(str(e))
-                    finally:
-                        db.close()
-
-
 # ─── Newsletter Subscribers ───────────────────────────────────────────────────
 def _admin_newsletter():
     st.markdown(f'<h3 style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--ink-900);margin-bottom:16px;">{icon("mail", size=17)} Newsletter Subscribers</h3>', unsafe_allow_html=True)
@@ -1742,10 +1592,9 @@ def _admin_announcements():
                     sent_count = 0
                     failed_count = 0
                     if sub_emails:
-                        email_body = f"<h2 style='color:#0F2D6B;'>{title}</h2><div style='background:#F8FAFC;border-radius:8px;padding:16px;'>{content}</div>"
                         for sub_email in sub_emails:
                             try:
-                                if send_email(sub_email, title, _base_template(email_body)):
+                                if send_announcement_email(title, content, sub_email):
                                     sent_count += 1
                                 else:
                                     failed_count += 1
@@ -1884,20 +1733,33 @@ def _admin_settings():
                 contact_phone = st.text_input("Contact Phone", value=settings.get("contact_phone", ""))
                 contact_address = st.text_input("Address", value=settings.get("contact_address", ""))
                 office_hours = st.text_input("Office Hours", value=settings.get("office_hours", "Mon–Sat: 9 AM–6 PM"))
+                whatsapp_number = st.text_input(
+                    "WhatsApp Support Number",
+                    value=settings.get("whatsapp_number", ""),
+                    help="Include country code. Any format is fine (e.g. +92 300 1234567) — "
+                         "it's normalized automatically when saved. Leave blank to hide the "
+                         "floating WhatsApp button on the site.",
+                )
             with col2:
                 stat_students = st.text_input("Students Stat", value=settings.get("stat_students", "500+"))
                 stat_courses = st.text_input("Courses Stat", value=settings.get("stat_courses", "12+"))
                 stat_certs = st.text_input("Certificates Stat", value=settings.get("stat_certificates", "300+"))
                 stat_instructors = st.text_input("Instructors Stat", value=settings.get("stat_instructors", "10+"))
             if st.form_submit_button("Save Contact Settings", type="primary"):
-                for k, v in {
-                    "contact_email": contact_email, "contact_phone": contact_phone,
-                    "contact_address": contact_address, "office_hours": office_hours,
-                    "stat_students": stat_students, "stat_courses": stat_courses,
-                    "stat_certificates": stat_certs, "stat_instructors": stat_instructors,
-                }.items():
-                    update_setting(k, v)
-                st.success("Saved.")
+                from utils.helpers import normalize_whatsapp_number
+                whatsapp_clean = normalize_whatsapp_number(whatsapp_number)
+                if whatsapp_number.strip() and not whatsapp_clean:
+                    st.error("WhatsApp number looks invalid — please include a country code (7–15 digits total).")
+                else:
+                    for k, v in {
+                        "contact_email": contact_email, "contact_phone": contact_phone,
+                        "contact_address": contact_address, "office_hours": office_hours,
+                        "whatsapp_number": whatsapp_clean,
+                        "stat_students": stat_students, "stat_courses": stat_courses,
+                        "stat_certificates": stat_certs, "stat_instructors": stat_instructors,
+                    }.items():
+                        update_setting(k, v)
+                    st.success("Saved.")
 
     with tab_social:
         with st.form("settings_social"):
